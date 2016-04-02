@@ -1,0 +1,52 @@
+/*
+
+Based on Brendan Gregg's work: http://www.brendangregg.com/
+
+usage:
+stap -v histogram-kernel.stp 'kernel.function("net_rx_action")'
+stap -v histogram-kernel.stp 'kernel.function("tcp_collapse")'
+stap -v histogram-kernel.stp 'kernel.function("netif_receive_skb_internal")'
+
+*/
+
+global trace[64]
+global etime[64]
+global intervals
+
+probe $1.call   {
+        trace[cpu()] ++;
+        if (trace[cpu()] == 1) {
+                etime[cpu()] = gettimeofday_ns()
+        }
+}
+
+probe $1.return {
+        trace[cpu()] --
+        if (trace[cpu()] <= 0) {
+                t1_ns = etime[cpu()]
+                trace[cpu()] = 0
+                etime[cpu()] = 0
+                if (t1_ns == 0) {
+                        printf("Cpu %d was already in that function?\n", cpu());
+                } else {
+                        intervals <<< (gettimeofday_ns() - t1_ns)/1000
+                }
+        }
+}
+
+probe end {
+        printf("Duration min:%dus avg:%dus max:%dus count:%d\n",
+               @min(intervals), @avg(intervals), @max(intervals),
+               @count(intervals))
+        printf("Duration (us):\n")
+        print(@hist_log(intervals));
+        printf("\n")
+}
+
+%( $# > 1 %?
+probe timer.sec($2) {
+   %:
+probe timer.sec(30) {
+   %)
+      exit();
+}

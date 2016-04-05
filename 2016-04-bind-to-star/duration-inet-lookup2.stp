@@ -1,0 +1,53 @@
+/*
+
+usage:
+stap -v duration-inet-lookup2.stp
+
+*/
+
+global trace[32]
+global etime[32]
+
+global threshold_ms = 2
+
+global xextra[32]
+
+probe kernel.function("__inet_lookup_listener").call   {
+        trace[cpu()] ++
+        if (trace[cpu()] == 1) {
+                etime[cpu()] = gettimeofday_ns()
+                xextra[cpu()] = sprintf("%s -> %s",
+                                        str_addr($saddr, $sport),
+                                        str_addr($daddr, htons($hnum)))
+        }
+}
+
+probe kernel.function("__inet_lookup_listener").return {
+        trace[cpu()] --
+        if (trace[cpu()] <= 0) {
+                trace[cpu()] = 0
+                td = gettimeofday_ns() - etime[cpu()]
+                td_ms = td / 1000000
+                etime[cpu()] = 0
+                if (td_ms >= threshold_ms) {
+                        printf("%dms %s %s \n",
+                               td_ms,
+                               ppfunc (),
+                               xextra[cpu()]
+                               )
+                }
+                xextra[cpu()] = ""
+        }
+}
+
+
+function str_addr:string(addr, port) {
+        addr = ntohl(addr)
+        return sprintf("%d.%d.%d.%d:%d",
+                       (addr & 0xff000000) >> 24,
+                       (addr & 0x00ff0000) >> 16,
+                       (addr & 0x0000ff00) >> 8,
+                       (addr & 0x000000ff),
+                       ntohs(port)
+                )
+}

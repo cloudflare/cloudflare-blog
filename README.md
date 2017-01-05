@@ -1,2 +1,2 @@
-CloudFlare Blog code samples
+Cloudflare Blog code samples
 ============================

@@ -1,0 +1,99 @@
+#!/usr/bin/env python2
+import argparse
+import itertools
+import math
+import sys
+
+parser = argparse.ArgumentParser(description='Print log-2 histogram, like systemtap')
+parser.add_argument('-t', '--title', default="Values",
+                    help='title to print')
+parser.add_argument('-c', '--columns', type=int, default="50",
+                    help='number of colums for')
+parser.add_argument('-b', '--base', type=int, default="2",
+                    help='log base')
+parser.add_argument('-l', '--linear', action='store_true',
+                    help='do linear, not log')
+parser.add_argument('-j', '--justval', action='store_true',
+                    help='ignore bounds, use values from input')
+parser.add_argument('-p', '--percentage', action='store_true',
+                    help='Print percentage instead of counts')
+args = parser.parse_args()
+
+
+M = []
+for line in sys.stdin:
+    line = line.strip()
+    v = float(line)
+    M.append( v )
+
+M.sort(reverse=True)
+
+totalcount = len(M)
+minval = M[-1]
+maxval = M[0]
+avgval = sum(M) / float(len(M))
+devval = math.sqrt(sum([(m - avgval)**2 for m in M]) / float(len(M)))
+
+medval = M[len(M)/2]
+
+KV = []
+
+for i in itertools.count():
+    if args.justval:
+        bound=M[-1]
+        boundb=M[-1]
+    elif not args.linear:
+        if i > 0:
+            boundb = args.base**(i-1)
+        else:
+            boundb = 0
+        bound = args.base**i
+    else:
+        boundb = args.base*(i)
+        bound = args.base*(i+1)
+
+    c = 0
+    while len(M) > 0 and bound >= M[-1] :
+        c += 1
+        M.pop()
+    KV.append( (boundb, bound, c) )
+
+    if not M:
+        break
+
+maxcount = float(max(c for _, _, c in KV))
+maxbound = KV[-1][0]
+boundl = max(len(str(maxbound)), len('value'))
+
+print "%s min:%.2f avg:%.2f med=%.2f max:%.2f dev:%.2f count:%d" % (
+    args.title,
+    minval,
+    avgval,
+    medval,
+    maxval,
+    devval,
+    totalcount,
+)
+print "%s:" % (
+    args.title,
+)
+print "%*s |%*s %s" % (
+    boundl+1,
+    "value",
+    args.columns,
+    "-" * args.columns,
+    "count"
+)
+
+for boundb, bound, c in KV:
+    if args.percentage:
+        cp = "%5.2f%%" % ((c / float(totalcount))*100.0,)
+    else:
+        cp = "%d" % (c,)
+    print "%*d |%*s %s" % (
+        boundl + 1,
+        boundb,
+        args.columns,
+        "*" * int(args.columns * (c/maxcount)),
+        cp
+    )

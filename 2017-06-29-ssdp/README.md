@@ -1,7 +1,7 @@
 Misc command line tools
 =======================
 
-mmmwatch
+mmwatch
 --------
 
 A tool like "watch" but instead of just printing the output of passed

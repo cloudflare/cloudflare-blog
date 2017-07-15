@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import argparse
 import itertools
 import math
@@ -34,7 +34,7 @@ maxval = M[0]
 avgval = sum(M) / float(len(M))
 devval = math.sqrt(sum([(m - avgval)**2 for m in M]) / float(len(M)))
 
-medval = M[len(M)/2]
+medval = M[int(len(M) / 2)]
 
 KV = []
 
@@ -65,7 +65,7 @@ maxcount = float(max(c for _, _, c in KV))
 maxbound = KV[-1][0]
 boundl = max(len(str(maxbound)), len('value'))
 
-print "%s min:%.2f avg:%.2f med=%.2f max:%.2f dev:%.2f count:%d" % (
+print("%s min:%.2f avg:%.2f med=%.2f max:%.2f dev:%.2f count:%d" % (
     args.title,
     minval,
     avgval,
@@ -73,27 +73,27 @@ print "%s min:%.2f avg:%.2f med=%.2f max:%.2f dev:%.2f count:%d" % (
     maxval,
     devval,
     totalcount,
-)
-print "%s:" % (
+))
+print("%s:" % (
     args.title,
-)
-print "%*s |%*s %s" % (
+))
+print("%*s |%*s %s" % (
     boundl+1,
     "value",
     args.columns,
     "-" * args.columns,
     "count"
-)
+))
 
 for boundb, bound, c in KV:
     if args.percentage:
         cp = "%5.2f%%" % ((c / float(totalcount))*100.0,)
     else:
         cp = "%d" % (c,)
-    print "%*d |%*s %s" % (
+    print("%*d |%*s %s" % (
         boundl + 1,
         boundb,
         args.columns,
         "*" * int(args.columns * (c/maxcount)),
         cp
-    )
+    ))

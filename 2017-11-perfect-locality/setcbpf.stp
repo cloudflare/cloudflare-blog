@@ -1,0 +1,80 @@
+/*
+ * A systemtap script to set SO_ATTACH_REUSEPORT_CBPF socket option on
+ * a given file descriptor for a given process pid.
+ *
+ * The CBPF takes a parameter of REUSEPORT group size.
+ *
+ * Usage: sudo stap -g setcbpf.stp <pid> <file descriptor number> <reuseport group size>
+ *
+ * sudo stap -g `pidof -s nginx` 3 12
+ */
+%{
+#include <net/sock.h>
+%}
+
+/* Sets CBPF on a given struct socket. */
+function _set_cbpf:long(socket, group_size) %{
+        // CBPF code for REUSEPORT dispatch based on CPU() % group_size
+	struct sock_filter code[] = {
+                { BPF_LD  | BPF_W | BPF_ABS, 0, 0, SKF_AD_OFF + SKF_AD_CPU }, // A = #cpu
+                { BPF_ALU | BPF_MOD | BPF_K, 0, 0, STAP_ARG_group_size },     // A = A % group_size
+                { BPF_RET | BPF_A, 0, 0, 0 },                                 // return A
+	};
+
+	struct sock_fprog fprog = {
+		.len = ARRAY_SIZE(code),
+		.filter = code,
+	};
+
+        long ret, seg;
+        struct socket *socket = (struct socket *)STAP_ARG_socket;
+
+        /* setsockopt() copies data by using copy_from_user. This
+         * function checks if the memory area is in userpsace. To fool
+         * this check, we temporairly grant the userspace access to
+         * all memory space. */
+        seg = current->thread.addr_limit.seg;
+        current->thread.addr_limit.seg = -1;
+
+        ret = sock_setsockopt(socket, 0, SO_ATTACH_REUSEPORT_CBPF,
+                              (void*)&fprog, sizeof(fprog));
+
+        /* Restore userpace memory restrictions. */
+        current->thread.addr_limit.seg = seg;
+
+        STAP_RETURN(ret);
+%}
+
+/* struct socket from FD, increases refcount */
+function sockfd_lookup:long(file) %{
+	int err = 0;
+	STAP_RETURN((struct socket *) sockfd_lookup(STAP_ARG_file, &err));
+%}
+
+/* decreases refcount on struct socket */
+function sockfd_put(socket) %{
+	sockfd_put(((struct socket *) STAP_ARG_socket));
+%}
+
+function set_cbpf:long(fd, group_size) {
+	socket = sockfd_lookup(fd)
+	if (socket == NULL) {
+		return 1
+	}
+	r = _set_cbpf(&@cast(socket, "socket"), group_size)
+	sockfd_put(socket)
+        return r
+}
+
+global in_progress = 0;
+probe process($1).syscall, process($1).syscall.return, timer.ms(500) {
+        if (pid() == $1 && in_progress++ == 0) {
+                fd = $2
+                group_size = $3
+                printf("[+] Pid=%d fd=%d group_size=%d setsockopt(SO_ATTACH_REUSEPORT_CBPF)=",
+                       pid(), fd, group_size)
+                ret = set_cbpf(fd, group_size);
+                printf("%d\n", ret)
+                exit()
+        }
+}

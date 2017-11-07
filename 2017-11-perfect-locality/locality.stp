@@ -1,0 +1,119 @@
+/*
+ * locality.stp: A systemtap script showing RX and TX packet locality.
+ * We define "packet locality" as a probability of packet (skb) to be
+ * received by network card, processed by network stack and read by
+ * userspace program on a single CPU core.
+ *
+ * To count this we hook into skb_alloc and kfree_skb and record CPU
+ * number on skb allocation and free. If they match, and if the RX
+ * queue number "skb->queue_mapping" or "skb->sender_cpu" is
+ * reasonable, we assume locality.
+ *
+ * Depending on circumstanes keeping good packet locality may be
+ * desireable. This can improve CPU cache locality and make packet
+ * processing latency more predictable.
+ *
+ * Usage: stap -g locality.stp <number of CPU cores>
+ *
+ * Where number of cores is number of real, non-HT cpu cores on your
+ * system. This is used to assess RX queue numbers onto CPU core
+ * numbers.
+ */
+%{
+#include <linux/skbuff.h>
+%}
+
+/* Read the max number of CPUs from the kernel: CONFIG_NR_CPUS */
+function get_config_nr_cpus:long() %{
+        STAP_RETURN(CONFIG_NR_CPUS);
+%}
+
+global CONFIG_NR_CPUS, NUMBER_OF_CORES
+probe begin {
+        CONFIG_NR_CPUS = get_config_nr_cpus()
+        NUMBER_OF_CORES = $1
+}
+
+/* FCLONE skb's are super weird. But anyway, the point of this
+ * function is to retrieve the real skb from skb pointer. */
+function skb_from_clone:long(clone_skb) %{
+        struct sk_buff *skb = (struct sk_buff*)STAP_ARG_clone_skb;
+	struct sk_buff_fclones *fclones;
+
+	if (skb->fclone == SKB_FCLONE_ORIG) {
+		fclones = container_of(skb, struct sk_buff_fclones, skb1);
+                STAP_RETURN(&fclones->skb2);
+        }
+        STAP_RETURN(NULL);
+%}
+
+
+global A%[32768]
+global vgood_rx, bad_rx, vgood_tx, bad_tx;
+
+/* Count all the allocs */
+probe kernel.function("__alloc_skb@net/core/skbuff.c").return,
+        kernel.function("__netdev_alloc_skb@net/core/skbuff.c").return,
+        kernel.function("__napi_alloc_skb@net/core/skbuff.c").return
+{
+        skb = $return
+        A[skb] = cpu() + 1
+}
+
+/* Count all the frees */
+probe kernel.function("__kfree_skb@net/core/skbuff.c").call {
+        cpu_alloc = A[$skb] - 1
+        delete A[$skb]
+
+        cpu_free = cpu()
+        local = cpu_free == cpu_alloc
+        s = &@cast($skb, "struct sk_buff")
+
+        sender_cpu = s->sender_cpu
+        if (sender_cpu == 0 && s->fclone == 1) {
+                // FCLONE fast clone. Retireve the original skb.
+                s2 = &@cast(skb_from_clone(s), "struct sk_buff")
+                sender_cpu = s2->sender_cpu
+        }
+
+        if (cpu_alloc == -1) {
+                /* Failed to register the allocation CPU */
+        } else if (sender_cpu > CONFIG_NR_CPUS) {
+                /* RX. Sender_cpu > 511+1, means NAPI_ID. We can't
+                 * really map from napi_id to #cpu, but we can look at
+                 * RX queue number and try to guess on which CPU it's
+                 * supposed to land. */
+                queue_mapping = s->queue_mapping
+
+                if (local && (queue_mapping - 1 == cpu_free || (queue_mapping - 1  + NUMBER_OF_CORES) == cpu_free || queue_mapping == 0) ) {
+                        vgood_rx ++
+                } else {
+                        bad_rx ++
+                }
+        } else if (sender_cpu > 0) {
+                /* TX path. */
+                if (local && cpu_alloc == sender_cpu - 1) {
+                        vgood_tx ++
+                } else {
+                        bad_tx ++
+                }
+        } else {
+                /* Some other thing. Perhaps unix sockets. */
+        }
+}
+
+probe timer.sec(1) {
+        rx_tot = vgood_rx + bad_rx
+        if (rx_tot == 0) {
+                rx_tot = 1
+        }
+        tx_tot = vgood_tx + bad_tx
+        if (tx_tot == 0) {
+                tx_tot = 1
+        }
+        printf("rx=%3d%% %4dkpps tx=%3d%% %4dkpps\n",
+               vgood_rx*100 / rx_tot, rx_tot / 1000,
+               vgood_tx*100 / tx_tot, tx_tot / 1000)
+        vgood_rx = 0; bad_rx = 0; vgood_tx = 0; bad_tx = 0;
+}
+

@@ -1,0 +1,54 @@
+/*
+ * Accept.stp. Script to debug accept socket locality, especially
+ * useful for REUSEPORT sockets.
+ *
+ * Usage: $ stap -g accept.stp <name of executable>
+ */
+%{
+#include <net/sock.h>
+%}
+
+/* Read sk_incoming_cpu from struct sock */
+function _get_so_incoming_cpu:long(sock) %{
+        long sic;
+	struct sock *sock = (struct sock *) STAP_ARG_sock;
+	lock_sock(sock);
+	sic = sock->sk_incoming_cpu;
+	release_sock(sock);
+	STAP_RETURN(sic);
+%}
+
+/* struct socket from FD, increases refcount */
+function sockfd_lookup:long(file) %{
+	int err = 0;
+	STAP_RETURN((struct socket *) sockfd_lookup(STAP_ARG_file, &err));
+%}
+
+/* decreases refcount on struct socket */
+function sockfd_put(socket) %{
+	sockfd_put(((struct socket *) STAP_ARG_socket));
+%}
+
+function get_so_incoming_cpu:long(fd) {
+	socket = sockfd_lookup(fd)
+	if (socket == NULL) {
+		return 1
+	}
+
+	cpu = _get_so_incoming_cpu(@cast(socket, "socket")->sk)
+	sockfd_put(socket)
+        return cpu
+}
+
+probe kernel.function("SYSC_accept4").return {
+	if (execname() == @1 && $return >= 0){
+                sd = @entry(@var("fd"))
+                cd = $return
+                printf("cpu=#%d pid=%d accept(%d) -> fd=%d rxcpu=#%d\n",
+                       cpu(),
+                       pid(),
+                       sd,
+                       cd,
+                       get_so_incoming_cpu(cd))
+        }
+}

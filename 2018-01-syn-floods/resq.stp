@@ -1,0 +1,54 @@
+/*
+ * This tool prints Accept and SYN Queue sizes for a given LISTEN TCP socket.
+ * It reads "icsk_accept_queue" and "listen_opt->qlen" fields from
+ * the relevant socket structures.
+ *
+ * Usage: sudo stap -g resq.stap <pid> <file descriptor number>
+ *
+ * Example: sudo stap -g resq.stap `pidof -s nginx` 5
+ */
+%{
+#include <linux/file.h>
+#include <net/sock.h>
+#include <linux/fdtable.h>
+#include <linux/sched.h>
+%}
+
+function task_file_handle_socket:long (task:long, fd:long) %{ /* pure */
+	struct task_struct *p = (struct task_struct *)((long)STAP_ARG_task);
+	struct files_struct *files;
+	struct file *filp;
+	struct dentry *dentry;
+	struct inode *inode;
+
+	rcu_read_lock();
+	if ((files = kread(&p->files)) &&
+	    (filp = fcheck_files(files, STAP_ARG_fd)) &&
+#ifdef STAPCONF_DPATH_PATHX
+	    (dentry = kread(&filp->f_path.dentry)) &&
+#else
+	    (dentry = kread(&filp->f_dentry)) &&
+#endif
+	    (inode = kread(&dentry->d_inode))) {
+		if (S_ISSOCK(kread(&inode->i_mode)))
+			STAP_RETVALUE = (long)SOCKET_I(inode)->sk;
+	}
+
+	CATCH_DEREF_FAULT();
+	rcu_read_unlock();
+%}
+global sk
+
+probe begin {
+        printf("PID=%d FD=%d\n", $1, $2);
+        task = pid2task($1)
+        printf("TASK=%p\n", task);
+        sk = task_file_handle_socket(task, $2)
+        printf("sk=%p\n", sk);
+}
+
+probe timer.sec(1) {
+        q = &@cast(sk, "inet_connection_sock")->icsk_accept_queue;
+        l = @cast(q, "struct request_sock_queue")->listen_opt->qlen;
+        printf("reqsk_queue_len=%d\n", l)
+}

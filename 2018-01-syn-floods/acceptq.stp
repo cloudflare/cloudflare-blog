@@ -1,0 +1,53 @@
+/*
+ * Prints details on specifically what connections
+ * suffered due to Accept Queue overflow. It can be greatly
+ * useful for identifying periodically hung applications that
+ * fails to accept() connections fast enough.
+ *
+ * Usage: stap acceptq.stp
+ */
+probe begin {
+    printf("time (us)       \tacceptq\tqmax\tlocal addr\tremote_addr\n")
+}
+
+function skb_get_remote_v4addr:string(skb:long)
+{
+    return format_ipaddr(__ip_skb_daddr(__get_skb_iphdr(skb)), 2 /* AF_INET */)
+}
+
+function skb_get_remote_v6addr:string(skb:long)
+{
+    ipv6_hdr = &@cast(__get_skb_iphdr(skb), "ipv6hdr")
+    return format_ipaddr(&ipv6_hdr->daddr, 10 /* AF_INET6 */)
+}
+
+function skb_get_remote_port:long(skb:long)
+{
+    return __tcp_skb_sport(__get_skb_tcphdr(skb))
+}
+
+probe kernel.function("tcp_v4_conn_request") {
+    if ($sk->sk_ack_backlog > $sk->sk_max_ack_backlog) {
+        printf("%d\t%d\t%d\t%s:%d\t%s:%d\n",
+            gettimeofday_us(),
+            $sk->sk_ack_backlog,
+            $sk->sk_max_ack_backlog,
+            inet_get_ip_source($sk),
+            inet_get_local_port($sk),
+            skb_get_remote_v4addr($skb),
+            skb_get_remote_port($skb));
+    }
+}
+
+probe kernel.function("tcp_v6_conn_request") {
+    if ($sk->sk_ack_backlog > $sk->sk_max_ack_backlog) {
+        printf("%d\t%d\t%d\t[%s]:%d\t[%s]:%d\n",
+            gettimeofday_us(),
+            $sk->sk_ack_backlog,
+            $sk->sk_max_ack_backlog,
+            inet_get_ip_source($sk),
+            inet_get_local_port($sk),
+            skb_get_remote_v6addr($skb),
+            skb_get_remote_port($skb));
+    }
+}

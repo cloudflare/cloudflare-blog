@@ -7,7 +7,7 @@ import datetime
 import re
 
 
-digits_re = re.compile("([0-9]*)")
+digits_re = re.compile("([0-9eE.+]*)")
 to = 2.0
 CLS='\033[2J\033[;H'
 digit_chars = set('0123456789.')

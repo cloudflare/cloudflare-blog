@@ -87,10 +87,10 @@ T = numpy.fft.fftfreq(len(B)) * (1000000000/UNIT)
 # [*] cutoff spikes in fft
 #
 # Cheating a bit here. Let's look for threshold/spike by inspecting
-# frequencies from 2kHz up to 250khz.
+# frequencies from 2kHz up to 350khz.
 #
 lowHz = 2000
-highHz = 250000
+highHz = 350000
 for i, t in enumerate(T):
     if t > lowHz:
         low = i

@@ -5,7 +5,6 @@
  */
 #define _GNU_SOURCE // setaffinity
 
-#include <emmintrin.h>
 #include <fcntl.h>
 #include <sched.h>
 #include <smmintrin.h>
@@ -14,10 +13,14 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/personality.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+
+inline static uint64_t rdtsc() {
+	register uint32_t lo, hi;
+	asm volatile("rdtsc" : "=a" (lo), "=d" (hi));
+	return ((uint64_t)lo | ((uint64_t)hi << 32));
+}
 
 #define TIMESPEC_NSEC(ts) ((ts)->tv_sec * 1000000000ULL + (ts)->tv_nsec)
 inline static uint64_t realtime_now()
@@ -40,6 +43,8 @@ int main(int argc, char *argv[]){
 		}
 		// re-run yourself
 		execvp(argv[0], argv);
+		perror("execvp()");
+		exit(-1);
 	}
 
 	/* For confirmation, print stack and code segments */
@@ -48,12 +53,13 @@ int main(int argc, char *argv[]){
 	/* [2] Setaffinity */
 	cpu_set_t set;
 	CPU_ZERO(&set);
-	CPU_SET(2, &set);
+	CPU_SET(0, &set);
 	int r = sched_setaffinity(0, sizeof(set), &set);
 	if (r == -1) {
 		perror("sched_setaffinity([0])");
 		exit(-1);
 	}
+	fprintf(stderr, "[*] CPU affinity set to CPU #0\n");
 
 	/* [3] Mmap  */
 	void *addr = mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_POPULATE|MAP_SHARED|MAP_ANONYMOUS, -1, 0);
@@ -62,37 +68,22 @@ int main(int argc, char *argv[]){
 		exit(-1);
 	}
 
-	/* It's fun exercise to try to mmap not WriteBack memory
-	 * (uncacheable in MTRR). I failed to do it from userpace so
-	 * far. Google says this might possibly work: */
-	if (0) {
-		int fd = open("/dev/mem", O_RDWR|O_SYNC);
-		if (fd < 0) {
-			perror("open(/dev/mem)");
-			exit(-1);
-		}
-		void *uptr = mmap(addr, 4096, PROT_READ|PROT_WRITE, MAP_POPULATE|MAP_SHARED|MAP_LOCKED, fd, 0);
-		if (uptr == MAP_FAILED) {
-			perror("mmap()");
-			exit(-1);
-		}
-		addr = uptr;
-	}
-
-	__m128i *one_global_var = (__m128i*)addr;
+	int *one_global_var = (int*)addr;
 	_mm_clflush(one_global_var);
 
-	/* [4] Spin the CPU to allow frequency scaling to kick in. */
-	uint64_t base, rt0, rt1;
-	base = realtime_now();
+	/* [4] Spin the CPU to allow frequency scaling to settle down. */
+	uint64_t base, rt0, rt1, cl0, cl1;
+	rt0 = realtime_now();
+	cl0 = rdtsc();
 	int i;
 	for (i=0; 1; i++) {
 		rt1 = realtime_now();
-		if (rt1 - base > 1000000000){
+		if (rt1 - rt0 > 1000000000){
 			break;
 		}
 	}
-	fprintf(stderr, "[ ] Fun fact. I did %d clock_gettime()'s per second\n", i);
+	cl1 = rdtsc();
+	fprintf(stderr, "[ ] Fun fact. clock_gettime() takes roughly %.1fns and %.1f cycles\n", 1000000000.0 / i, (cl1-cl0)*1.0 / i);
 
 	/* [5] Do the work! */
 	base = realtime_now();
@@ -104,19 +95,21 @@ int main(int argc, char *argv[]){
 		uint32_t d; // duration
 	} deltas[DELTAS_SZ];
 
-	fprintf(stderr, "[*] Measuring MOVNTDQA + CLFLUSH time. Running %d iterations.\n", DELTAS_SZ);
+	fprintf(stderr, "[*] Measuring MOV + CLFLUSH. Running %d iterations.\n", DELTAS_SZ);
 	for (i = 0; i < DELTAS_SZ; i++) {
-		__m128i x;
-		// Perform data load. MOVNT is here only for kicks,
-		// for writeback memory it makes zero difference, the
-		// caches are still polluted.
-		asm volatile("movntdqa (%1), %0" :  "=x" (x) : "a" (one_global_var));
-		asm volatile("" :  : "x" ( x ));
+		// Perform memory load. Any will do/
+		*(volatile int *) one_global_var;
+
+		// Flush CPU cache. This is relatively slow
 		_mm_clflush(one_global_var);
+
+		// mfence is needed, otherwise sometimes the loop
+		// takes very short time (25ns instead of like 160). I
+		// blame reordering.
 		asm volatile("mfence");
 
 		rt1 = realtime_now();
-		uint64_t td = rt1-rt0;
+		uint64_t td = rt1 - rt0;
 		rt0 = rt1;
 		deltas[i].t = rt1 - base;
 		deltas[i].d = td;

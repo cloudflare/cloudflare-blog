@@ -1,0 +1,7 @@
+[package]
+name = "scm_example"
+version = "0.1.0"
+authors = ["Vlad Krasnov <vlad@cloudflare.com>"]
+
+[dependencies]
+libc = "0.2"

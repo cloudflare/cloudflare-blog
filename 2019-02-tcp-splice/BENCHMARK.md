@@ -3,40 +3,40 @@ To run the benchmark
 
 1. Prepare flow steering to pin RX traffic on right box:
 
-    ethtool -n eth2 | grep Filter: |cut -d " " -f 2|xargs -L1 sudo ethtool -N eth2 delete
-    ethtool -N eth2 flow-type tcp4 dst-ip $RIP dst-port 1234  action 2
+       ethtool -n eth2 | grep Filter: |cut -d " " -f 2|xargs -L1 sudo ethtool -N eth2 delete
+       ethtool -N eth2 flow-type tcp4 dst-ip $RIP dst-port 1234  action 2
 
 2. Prepare flow steering to pin RX traffic on left box:
 
-    ethtool -n eth2 | grep Filter: |cut -d " " -f 2|xargs -L1 sudo ethtool -N eth2 delete
-    ethtool -N eth2 flow-type tcp4 src-ip $RIP src-port 1234  action 2
+       ethtool -n eth2 | grep Filter: |cut -d " " -f 2|xargs -L1 sudo ethtool -N eth2 delete
+       ethtool -N eth2 flow-type tcp4 src-ip $RIP src-port 1234  action 2
 
 3. Disable turbo on both boxes:
 
-    echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo
+       echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo
 
 4. Pin TX traffic to one CPU on both boxes:
 
-    for TX in /sys/class/net/eth2/queues/tx-*/xps_cpus; do
-        echo 0  > \$TX
-    done
-    echo ff,ffffffff > /sys/class/net/eth2/queues/tx-1/xps_cpus
+       for TX in /sys/class/net/eth2/queues/tx-*/xps_cpus; do
+           echo 0  > \$TX
+       done
+       echo ff,ffffffff > /sys/class/net/eth2/queues/tx-1/xps_cpus
 
 5. Run the tests:
 
-    ssh -n $RIGHT sudo taskset -c 4 ./echo-naive 0.0.0.0:1234 $BUSYPOLL
-    ssh -n $LEFT  sudo taskset -c 4 ./test-burst $RIP:1234 $SIZE $ROUNDS
+       ssh -n $RIGHT sudo taskset -c 4 ./echo-naive 0.0.0.0:1234 $BUSYPOLL
+       ssh -n $LEFT  sudo taskset -c 4 ./test-burst $RIP:1234 $SIZE $ROUNDS
 
 6. Trim bottom 1% of the data:
 
-    SZ=`cat $F/data-$TEST.txt | wc -l`
-    # kill bottom 1% of times
-    NNP=$[$SZ - $SZ*1 / 100]
-    cat $F/data-$TEST.txt|sort -n| head -n $NNP \
-        | ~/bin/mmhistogram -t "" \
-        | grep "max" \
-        | tr := "  " \
-        | awk '{ print $6 ", " $10 ", " $2 ", " $8 }'
+       SZ=`cat $F/data-$TEST.txt | wc -l`
+       # kill bottom 1% of times
+       NNP=$[$SZ - $SZ*1 / 100]
+       cat $F/data-$TEST.txt|sort -n| head -n $NNP \
+           | ~/bin/mmhistogram -t "" \
+           | grep "max" \
+           | tr := "  " \
+           | awk '{ print $6 ", " $10 ", " $2 ", " $8 }'
 
 7. Plot the numbers:
 

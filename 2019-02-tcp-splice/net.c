@@ -110,7 +110,7 @@ int net_connect_tcp_blocking(struct sockaddr_storage *ss, int do_zerocopy)
 		one = 1;
 		r = setsockopt(sd, SOL_SOCKET, SO_ZEROCOPY, &one, sizeof(one));
 		if (r < 0) {
-			PFATAL("getsockopt()");
+			PFATAL("setsockopt(SO_ZEROCOPY)");
 		}
 	}
 
@@ -195,7 +195,7 @@ const char *net_ntop(struct sockaddr_storage *ss)
 	return a;
 }
 
-int net_bind_tcp(struct sockaddr_storage *ss)
+int net_bind_tcp(struct sockaddr_storage *ss, int do_zerocopy)
 {
 	int sd = socket(ss->ss_family, SOCK_STREAM, IPPROTO_TCP);
 	if (sd < 0) {
@@ -220,6 +220,15 @@ int net_bind_tcp(struct sockaddr_storage *ss)
 	r = setsockopt(sd, SOL_TCP, TCP_CONGESTION, cong, strlen(cong));
 	if (r < 0) {
 		PFATAL("setsockopt(TCP_CONGESTION)");
+	}
+
+	if (do_zerocopy) {
+		/* Zerocopy shall be set on the parent accept socket. */
+		one = 1;
+		r = setsockopt(sd, SOL_SOCKET, SO_ZEROCOPY, &one, sizeof(one));
+		if (r < 0) {
+			PFATAL("setsockopt(SO_ZEROCOPY)");
+		}
 	}
 
 	r = bind(sd, (struct sockaddr *)ss, sizeof_ss(ss));

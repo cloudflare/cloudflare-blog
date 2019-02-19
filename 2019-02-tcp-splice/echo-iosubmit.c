@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	fprintf(stderr, "[+] Accepting on %s busy_poll=%d\n", net_ntop(&listen),
 		busy_poll);
 
-	int sd = net_bind_tcp(&listen);
+	int sd = net_bind_tcp(&listen, 0);
 	if (sd < 0) {
 		PFATAL("connect()");
 	}

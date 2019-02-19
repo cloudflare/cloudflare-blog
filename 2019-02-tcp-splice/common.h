@@ -30,7 +30,7 @@ int net_connect_tcp_blocking(struct sockaddr_storage *sas, int do_zerocopy);
 int net_getpeername(int sd, struct sockaddr_storage *ss);
 int net_getsockname(int sd, struct sockaddr_storage *ss);
 const char *net_ntop(struct sockaddr_storage *ss);
-int net_bind_tcp(struct sockaddr_storage *ss);
+int net_bind_tcp(struct sockaddr_storage *ss, int do_zerocopy);
 int net_accept(int sd, struct sockaddr_storage *ss);
 void set_nonblocking(int fd);
 
@@ -47,7 +47,7 @@ inline static uint64_t realtime_now()
 struct ztable;
 struct zbuf;
 
-struct ztable *ztable_new();
+struct ztable *ztable_new(int prewarm);
 struct zbuf *zbuf_new(struct ztable *t);
 void zbuf_free(struct ztable *t, struct zbuf *z);
 void zbuf_schedule(struct ztable *t, struct zbuf *z, int n);

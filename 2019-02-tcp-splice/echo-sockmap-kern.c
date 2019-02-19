@@ -30,10 +30,7 @@ struct bpf_map_def SEC("maps") sock_map = {
 #endif
 
 SEC("prog_parser")
-int _prog_parser(struct __sk_buff *skb)
-{
-	return skb->len;
-}
+int _prog_parser(struct __sk_buff *skb) { return skb->len; }
 
 SEC("prog_verdict")
 int _prog_verdict(struct __sk_buff *skb)

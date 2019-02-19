@@ -109,8 +109,9 @@ int main(int argc, char **argv)
 
 		while (tx_bytes || rx_bytes) {
 			if (tx_bytes) {
-				int d = trunc_iov(tx_iov, iov_cnt,
-						  sizeof(tx_buf), MIN(128*1024*1024, tx_bytes));
+				int d = trunc_iov(
+					tx_iov, iov_cnt, sizeof(tx_buf),
+					MIN(128 * 1024 * 1024, tx_bytes));
 				struct msghdr msg_hdr = {
 					.msg_iov = tx_iov,
 					.msg_iovlen = d,
@@ -151,8 +152,9 @@ int main(int argc, char **argv)
 					flags = MSG_WAITALL;
 				}
 
-				int d = trunc_iov(rx_iov, iov_cnt,
-						  sizeof(rx_buf), MIN(128*1024*1024,rx_bytes));
+				int d = trunc_iov(
+					rx_iov, iov_cnt, sizeof(rx_buf),
+					MIN(128 * 1024 * 1024, rx_bytes));
 				struct msghdr msg_hdr = {
 					.msg_iov = rx_iov,
 					.msg_iovlen = d,

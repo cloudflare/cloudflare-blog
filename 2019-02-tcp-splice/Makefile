@@ -35,6 +35,12 @@ all: venv/.ok
 		-l elf \
 		-o echo-sockmap
 
+	clang -g -Wall -Wextra -O2 \
+		net.c \
+		echo-zero.c \
+		zerocopy.c \
+		-o echo-zero
+
 venv/.ok:
 	virtualenv venv --python=python3
 	./venv/bin/pip3 install pyelftools

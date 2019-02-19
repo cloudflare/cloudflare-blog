@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	fprintf(stderr, "[+] Accepting on %s busy_poll=%d\n", net_ntop(&listen),
 		busy_poll);
 
-	int sd = net_bind_tcp(&listen);
+	int sd = net_bind_tcp(&listen, 0);
 	if (sd < 0) {
 		PFATAL("connect()");
 	}
@@ -64,7 +64,7 @@ again_accept:;
 	 * says that it should be no larger than 512KiB since this is
 	 * the max we can expect realistically to fit into cpu
 	 * cache. */
-#define SPLICE_MAX (512*1024)
+#define SPLICE_MAX (512 * 1024)
 
 	r = fcntl(pfd[0], F_SETPIPE_SZ, SPLICE_MAX);
 	if (r < 0) {

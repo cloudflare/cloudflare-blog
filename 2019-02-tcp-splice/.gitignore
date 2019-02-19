@@ -4,4 +4,5 @@ echo-sockmap
 echo-naive
 echo-splice
 echo-iosubmit
+echo-zero
 test-burst

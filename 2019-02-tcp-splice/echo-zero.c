@@ -1,14 +1,26 @@
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <linux/tcp.h>
+
+// importing netinet/tcp.h conflicts with linux/tcp.h
+#ifndef SOL_TCP
+#define SOL_TCP 6
+#endif
 
 #include "common.h"
 
 int main(int argc, char **argv)
 {
+	struct ztable *ztable = ztable_new(128);
+
 	if (argc < 2) {
 		FATAL("Usage: %s <listen:port>", argv[0]);
 	}
@@ -24,7 +36,9 @@ int main(int argc, char **argv)
 	fprintf(stderr, "[+] Accepting on %s busy_poll=%d\n", net_ntop(&listen),
 		busy_poll);
 
-	int sd = net_bind_tcp(&listen, 0);
+	/* SO_ZEROCOPY must be done before bind() syscall or on the
+	 * accept() socket. Enable ZEROCOPY. */
+	int sd = net_bind_tcp(&listen, 1);
 	if (sd < 0) {
 		PFATAL("connect()");
 	}
@@ -51,66 +65,56 @@ again_accept:;
 
 	uint64_t t0 = realtime_now();
 
-	char buf[BUFFER_SIZE];
-
 	uint64_t sum = 0;
-	while (1) {
-		int n = recv(cd, buf, sizeof(buf), 0);
-		if (n < 0) {
-			if (errno == EINTR) {
-				continue;
-			}
-			if (errno == ECONNRESET) {
-				fprintf(stderr, "[!] ECONNRESET\n");
-				break;
-			}
-			PFATAL("read()");
-		}
+	int zc_send_number = 0;
+	int done = 0;
+	while (done == 0) {
+		struct zbuf *z = zbuf_new(ztable);
+		int n = read(cd, zbuf_buf(z), zbuf_cap(z));
 
 		if (n == 0) {
-			/* On TCP socket zero means EOF */
+			zbuf_free(ztable, z);
 			fprintf(stderr, "[-] edge side EOF\n");
-			break;
+			/* Ensure write buffer is flushed. */
+			done = 1;
+		} else {
+			if (n <= 0) {
+				PFATAL("read()");
+			}
+
+			int m = send(cd, zbuf_buf(z), n,
+				     MSG_ZEROCOPY | MSG_NOSIGNAL);
+			if (m < 0) {
+				PFATAL("send(MSG_ZEROCOPY)");
+			}
+
+			if (m != n) {
+				PFATAL("%d != %d", m, n);
+			}
+
+			zbuf_schedule(ztable, z, zc_send_number);
+
+			zc_send_number += 1;
+			sum += n;
 		}
 
-		sum += n;
+		/* Too many outstanding buffers -> reap notifications */
+		int run_number = 0;
+		while (ztable_items(ztable) > 16) {
+			ztable_reap_completions(ztable, cd, run_number > 0);
+			run_number += 1;
+		}
+	}
 
-		int m = send(cd, buf, n, MSG_NOSIGNAL);
-		if (m < 0) {
-			if (errno == EINTR) {
-				continue;
-			}
-			if (errno == ECONNRESET) {
-				fprintf(stderr, "[!] ECONNRESET on origin\n");
-				break;
-			}
-			if (errno == EPIPE) {
-				fprintf(stderr, "[!] EPIPE on origin\n");
-				break;
-			}
-			PFATAL("send()");
-		}
-		if (m == 0) {
-			break;
-		}
-		if (m != n) {
-			int err;
-			socklen_t err_len = sizeof(err);
-			int r = getsockopt(cd, SOL_SOCKET, SO_ERROR, &err,
-					   &err_len);
-			if (r < 0) {
-				PFATAL("getsockopt()");
-			}
-			errno = err;
-			if (errno == EPIPE || errno == ECONNRESET) {
-				break;
-			}
-			PFATAL("send()");
-		}
+	int run_number = 0;
+	while (ztable_items(ztable) > 0) {
+		ztable_reap_completions(ztable, cd, run_number > 0);
+		run_number += 1;
 	}
 
 	close(cd);
 	uint64_t t1 = realtime_now();
+	ztable_empty(ztable);
 
 	fprintf(stderr, "[+] Read %.1fMiB in %.1fms\n", sum / (1024 * 1024.),
 		(t1 - t0) / 1000000.);

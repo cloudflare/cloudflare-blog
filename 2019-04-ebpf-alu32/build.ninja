@@ -1,0 +1,58 @@
+rule cc-bpf
+  command = clang -g -O2 -Wall -Wextra -target bpf -Xclang -target-feature -Xclang +alu32 -c $in -o $out
+
+rule ll-bpf
+  command = clang -O2 -Wall -Wextra -target bpf -Xclang -target-feature -Xclang +alu32 -emit-llvm -S -c $in -o $out
+
+rule llc-bpf
+  command = llc -march=bpf -mattr=+alu32 -filetype=obj $in -o $out
+
+rule as
+  command = llvm-as $in -o $out
+
+rule bc-link
+  command = llvm-link $in | opt -always-inline -o $out
+
+rule objdump
+  command = llvm-objdump -S -no-show-raw-insn $in > $out
+
+rule go-build
+  command = go get github.com/newtools/ebpf && go build -o $out $in
+
+
+#
+# Build a socket filter that uses a function from an IR module.
+# The external IR function needs to have alwaysinline attribute set.
+#
+
+build bpf/filter.ll: ll-bpf bpf/filter.c
+build bpf/filter.bc: bc-link bpf/filter.ll bpf/sub64_ir.ll
+build bpf/filter.o: llc-bpf bpf/filter.bc
+build bpf/filter.s: objdump bpf/filter.o
+
+build run-bpf: go-build run_bpf.go | bpf/filter.o
+
+#
+# sub64_ir - manually tweaked IR
+#
+
+# Uncomment if you want to regenerate Clang's IR.
+#build bpf/sub64_ir.ll: ll-bpf bpf/sub64_ir.c
+build bpf/sub64_ir.o: llc-bpf bpf/sub64_ir.ll
+build bpf/sub64_ir.s: objdump bpf/sub64_ir.o
+
+#
+# Distilled examples for volatile load/store
+#
+
+build bpf/sub32_v1.ll: ll-bpf bpf/sub32_v1.c
+build bpf/sub32_v1.o: llc-bpf bpf/sub32_v1.ll
+build bpf/sub32_v1.s: objdump bpf/sub32_v1.o
+
+build bpf/sub32_v2.ll: ll-bpf bpf/sub32_v2.c
+build bpf/sub32_v2.o: llc-bpf bpf/sub32_v2.ll
+build bpf/sub32_v2.s: objdump bpf/sub32_v2.o
+
+build bpf/sub32_v3.ll: ll-bpf bpf/sub32_v3.c
+build bpf/sub32_v3.o: llc-bpf bpf/sub32_v3.ll
+build bpf/sub32_v3.s: objdump bpf/sub32_v3.o

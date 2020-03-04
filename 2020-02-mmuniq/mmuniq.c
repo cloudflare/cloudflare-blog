@@ -174,6 +174,7 @@ static int process_line(char *s, int l, uint64_t h, int force)
  * saves a bit of CPU on loadu_si128 - we just need to load memory
  * once. */
 #ifndef NOSSE
+const __m128i m2_mask = {0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL};
 static char *find_nl_and_hash(char *b, size_t sz, uint64_t *h_ptr)
 {
 	__m128i rk0 = {0x736f6d6570736575ULL, 0x646f72616e646f6dULL};
@@ -191,9 +192,7 @@ static char *find_nl_and_hash(char *b, size_t sz, uint64_t *h_ptr)
 			// Mask loaded bits out of buffer
 			int remainig_sz = e - i;
 			__m128i m1 = _mm_set1_epi8(remainig_sz);
-			__m128i m2 = {0x0706050403020100ULL,
-				      0x0f0e0d0c0b0a0908ULL};
-			__m128i mask = _mm_cmpgt_epi8(m1, m2);
+			__m128i mask = _mm_cmpgt_epi8(m1, m2_mask);
 			x = _mm_and_si128(x, mask);
 		}
 		__m128i r = _mm_cmpeq_epi8(x, q);
@@ -204,9 +203,7 @@ static char *find_nl_and_hash(char *b, size_t sz, uint64_t *h_ptr)
 		if (z != 0) {
 			// Don't take \n into account when counting hash
 			__m128i m1 = _mm_set1_epi8(ffs - 1);
-			__m128i m2 = {0x0706050403020100ULL,
-				      0x0f0e0d0c0b0a0908ULL};
-			__m128i mask = _mm_cmpgt_epi8(m1, m2);
+			__m128i mask = _mm_cmpgt_epi8(m1, m2_mask);
 			piece = _mm_and_si128(x, mask);
 		}
 
@@ -354,7 +351,7 @@ int main(int argc, char **argv)
 	int res = 0;
 	while (res == 0) {
 		int r = read(0, &buf[buf_pos], BUF_SZ - buf_pos);
-		if (r <= 0) {
+		if (r < 0) {
 			break;
 		}
 
@@ -378,12 +375,15 @@ int main(int argc, char **argv)
 		buf_pos = buf_sz - buf_pos;
 
 		// Filled buffer, no new line in sight
-		if (buf_pos == BUF_SZ) {
+		if (buf_pos == BUF_SZ || r == 0) {
 			uint64_t h;
 			// We know there is no \n in the buffer
 			find_nl_and_hash(&buf[0], BUF_SZ, &h);
 			res |= process_line(&buf[0], BUF_SZ, h, 1);
 			buf_pos = 0;
+			if (r == 0) {
+				break;
+			}
 		}
 
 		if (global_items > fill_threshold) {

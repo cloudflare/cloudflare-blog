@@ -268,6 +268,27 @@ static char *find_nl_and_hash(char *s, size_t n, uint64_t *h_ptr)
 static double fill_rate = DEFAULT_FILL_RATE;
 static int global_resizes;
 
+static int global_hugetlb = 0;
+
+static void *do_mmap(size_t sz)
+{
+	int hugetlb = MAP_HUGETLB;
+mmap_again:;
+	void *r = mmap(NULL, sz, PROT_READ | PROT_WRITE,
+		       MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE | hugetlb, -1,
+		       0);
+	if (r == MAP_FAILED && hugetlb) {
+		hugetlb = 0;
+		goto mmap_again;
+	}
+	if (r == MAP_FAILED) {
+		error(-1, errno, "mmap()");
+	}
+	global_hugetlb = hugetlb;
+	madvise(r, sz, MADV_RANDOM | MADV_WILLNEED | MADV_HUGEPAGE);
+	return r;
+}
+
 int main(int argc, char **argv)
 {
 	signal(SIGPIPE, SIG_IGN);
@@ -348,12 +369,7 @@ int main(int argc, char **argv)
 	global_size_mask -= 1;
 
 	size_t bm_sz = (global_size_mask + 1) * 8;
-	global_bm = mmap(NULL, bm_sz, PROT_READ | PROT_WRITE,
-			 MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE, -1, 0);
-
-	if (global_bm == MAP_FAILED) {
-		error(-1, errno, "mmap()");
-	}
+	global_bm = do_mmap(bm_sz);
 
 	uint64_t fill_threshold = fill_rate * (double)(global_size_mask + 1);
 
@@ -413,10 +429,7 @@ int main(int argc, char **argv)
 			uint64_t size_mask_new =
 				((global_size_mask + 1) * 2) - 1;
 			size_t bm_sz_new = (size_mask_new + 1) * 8;
-			uint64_t *bm_new =
-				mmap(NULL, bm_sz_new, PROT_READ | PROT_WRITE,
-				     MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE,
-				     -1, 0);
+			uint64_t *bm_new = do_mmap(bm_sz_new);
 			uint64_t j;
 			for (j = 0; j < global_size_mask; j++) {
 				uint64_t h = global_bm[j];

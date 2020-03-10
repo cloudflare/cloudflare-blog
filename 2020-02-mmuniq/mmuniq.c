@@ -161,6 +161,7 @@ static int process_line(char *s, int l, uint64_t h, int force)
 		line_count += 1;
 		// Issue the prefetch as soon as possible
 		__builtin_prefetch(&global_bm[h & global_size_mask]);
+		__builtin_prefetch(&global_bm[(h+8) & global_size_mask]);
 
 		c_lines[c_writer % C_LINE_SZ] = (struct c_line){s, l, h};
 		c_writer += 1;

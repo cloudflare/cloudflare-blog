@@ -39,6 +39,7 @@ static void print_usage(int default_hash_size)
 	       "  -f   Desired hash table fill rate. Default %.3f\n"
 	       "  -v   Print some stats.\n"
 	       "  -D   Print all repeated lines.\n"
+	       "  -H   Debug hash.\n"
 	       "",
 	       default_hash_size, DEFAULT_FILL_RATE);
 }
@@ -131,9 +132,15 @@ static void process_flush(char *s, int l, uint64_t h)
 	    (global_repeated == 1 && miss == 0)) {
 		memcpy(&out_buf[out_buf_pos], s, l);
 		out_buf_pos += l;
+		if (global_debug_hash) {
+			int r = sprintf(&out_buf[out_buf_pos], "\t%08lx", h);
+			out_buf_pos += r;
+		}
 		out_buf[out_buf_pos] = '\n';
 		out_buf_pos += 1;
-		if (out_buf_pos > BUF_SZ + 1) {
+		// Assumption is that we'll never go above BUF_SZ+1,
+		// and we have 2x BUF_SZ space for debug hash
+		if (out_buf_pos > (BUF_SZ * 2 - 1)) {
 			abort();
 		}
 	}
@@ -273,6 +280,7 @@ int main(int argc, char **argv)
 			{"fill-rate", required_argument, 0, 'f'},
 			{"verbose", no_argument, 0, 'v'},
 			{"all-repeated", no_argument, 0, 'D'},
+			{"debug-hash", no_argument, 0, 'H'},
 			{"help", no_argument, 0, 'h'},
 			{NULL, 0, 0, 0}};
 		optind = 1;
@@ -314,6 +322,9 @@ int main(int argc, char **argv)
 				break;
 			case 'D':
 				global_repeated = 1;
+				break;
+			case 'H':
+				global_debug_hash = 1;
 				break;
 			}
 		}
@@ -424,11 +435,14 @@ int main(int argc, char **argv)
 		fprintf(stderr,
 			"[.] %ldm lines processed."
 			" Unique items: %ldm."
-			" Hash table fill rate %.3f."
-			" Hash table resized %d times.\n",
+			" Hash table fill rate %.3f,"
+			" resized %d times,"
+			" size %ldMiB%s.\n",
 			line_count / 1000000, global_items / 1000000,
 			(double)global_items / (global_size_mask + 1),
-			global_resizes);
+			global_resizes,
+			(global_size_mask + 1) * 8 / 1024 / 1024,
+			global_hugetlb ? " (hugetlb)" : "");
 	}
 	munmap(global_bm, bm_sz);
 	return 0;

@@ -85,13 +85,15 @@ static uint64_t line_count = 0;
 /* For better prefetching we first count hashes and prefetch the hash
  * table. This is how many items to prefetch before actually doing
  * hash table inserts. */
-#define C_LINE_SZ 128
+#define C_LINE_SZ 32
 struct c_line {
 	char *s;
 	int l;
 	uint64_t h;
 } c_lines[C_LINE_SZ];
-int c_pos;
+uint64_t c_writer;
+uint64_t c_reader;
+static int global_debug_hash;
 
 /* When doing open linear-probing of hash table, give up after
  * hardcoded number of fill buffers. This is to give the program sane
@@ -146,6 +148,13 @@ static void process_flush(char *s, int l, uint64_t h)
 	}
 }
 
+static void process_flush_line()
+{
+	struct c_line *c = &c_lines[c_reader % C_LINE_SZ];
+	c_reader += 1;
+	process_flush(c->s, c->l, c->h);
+}
+
 static int process_line(char *s, int l, uint64_t h, int force)
 {
 	if (s != NULL) {
@@ -153,17 +162,19 @@ static int process_line(char *s, int l, uint64_t h, int force)
 		// Issue the prefetch as soon as possible
 		__builtin_prefetch(&global_bm[h & global_size_mask]);
 
-		c_lines[c_pos] = (struct c_line){s, l, h};
-		c_pos += 1;
+		c_lines[c_writer % C_LINE_SZ] = (struct c_line){s, l, h};
+		c_writer += 1;
 	}
 
-	if (force || c_pos == C_LINE_SZ) {
-		int i;
-		for (i = 0; i < c_pos && i < C_LINE_SZ; i++) {
-			struct c_line *c = &c_lines[i];
-			process_flush(c->s, c->l, c->h);
+	uint64_t c_size = c_writer - c_reader;
+	if (c_size == C_LINE_SZ) {
+		process_flush_line();
+	}
+
+	if (force) {
+		while (c_reader < c_writer) {
+			process_flush_line();
 		}
-		c_pos = 0;
 	}
 	if (force && out_buf_pos) {
 		int r = write(1, out_buf, out_buf_pos);

@@ -1,3 +1,5 @@
+// This is a trivial TCP server leaking sockets.
+
 package main
 
 import (

@@ -31,7 +31,7 @@ def main(cmd):
         t0 = datetime.datetime.now()
         out = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()[0]
 
-        p = digits_re.split(out)
+        p = digits_re.split(out.decode())
 
         if len(prevp) != len(p):
             s = p

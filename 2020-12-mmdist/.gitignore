@@ -1,0 +1,11 @@
+database.txt
+test-vector.txt
+test-vector.tmp
+test-vector.good*
+generate
+mmdist-naive
+mmdist-batch-avx2
+mmdist-naive-avx2
+mmdist-short-inv
+mmdist-short-inv-avx2
+mmdist-short-avx2

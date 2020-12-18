@@ -44,7 +44,7 @@ int main()
 
 	struct mmsghdr messages[MAX_MSG] = {0};
 
-	/* Not stricly needed since the msghdr is zeroed anyway, but let's be
+	/* Not strictly needed since the msghdr is zeroed anyway, but let's be
 	 * explicit */
 	int i;
 	for (i = 0; i < MAX_MSG; i++) {

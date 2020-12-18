@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func handle(conn net.Conn) {
+func handle(conn *net.TCPConn) {
 	defer conn.Close()
 	for {
 		time.Sleep(time.Second)
@@ -28,8 +28,14 @@ func main() {
 	for {
 		if conn, err := listener.Accept(); err == nil {
 			i += 1
+			c := conn.(*net.TCPConn)
+			// OS should not send keep-alive messages on the connection.
+			// By default, keep-alive probes are sent with a default value
+			// (currently 15 seconds), if supported by the protocol and operating
+			// system. Hence, SetKeepAlive should be turned off for the experiment.
+			c.SetKeepAlive(false)
 			if i < 800 {
-				go handle(conn)
+				go handle(c)
 			} else {
 				conn.Close()
 			}

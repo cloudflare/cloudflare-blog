@@ -1,6 +1,6 @@
 CC:=gcc
 
-all: naive naive-avx2 batch-avx2 short-avx2 short-avx2-threshold short-inv short-inv-avx2
+all: naive naive-avx2 batch-avx2 short-avx2 short-avx2-threshold short-inv short-inv-avx2 falconn-hyperplane
 
 naive: database.txt test-vector.txt
 	$(CC) -Wall -Wextra  -Wpointer-arith \
@@ -39,6 +39,33 @@ short-avx2: database.txt test-vector.txt
 		utils.c \
 		-O3 -o mmdist-short-avx2
 	< test-vector.txt $(PERF) ./mmdist-short-avx2 > test-vector.tmp
+	@diff --report-identical-files test-vector.good test-vector.tmp
+
+DEFAULT_PROBES:=100
+falconn: database.txt test-vector.txt
+	python falconnbench.py --probes $(DEFAULT_PROBES) > test-vector.tmp
+	@diff --report-identical-files test-vector.good test-vector.tmp
+
+falconn-npz: database.txt test-vector.txt
+	python falconnbench.py --numpy-database database.txt.npz --probes $(DEFAULT_PROBES) > test-vector.tmp
+	@diff --report-identical-files test-vector.good test-vector.tmp
+
+CROSS_PROBES=100
+falconn-crosspolytope: database.txt test-vector.txt
+	python falconnbench.py --params crosspolytope --probes $(CROSS_PROBES) > test-vector.tmp
+	@diff --report-identical-files test-vector.good test-vector.tmp
+
+falconn-crosspolytope-npz: database.txt test-vector.txt
+	python falconnbench.py --numpy-database database.txt.npz --params crosspolytope --probes $(CROSS_PROBES) > test-vector.tmp
+	@diff --report-identical-files test-vector.good test-vector.tmp
+
+HYPER_PROBES=200
+falconn-hyperplane: database.txt test-vector.txt
+	python falconnbench.py --params hyperplane --probes $(HYPER_PROBES) > test-vector.tmp
+	@diff --report-identical-files test-vector.good test-vector.tmp
+
+falconn-hyperplane-npz: database.txt test-vector.txt
+	python falconnbench.py --numpy-database database.txt.npz --params hyperplane --probes $(HYPER_PROBES) > test-vector.tmp
 	@diff --report-identical-files test-vector.good test-vector.tmp
 
 THRESHOLD:=48400

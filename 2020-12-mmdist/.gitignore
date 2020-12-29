@@ -1,4 +1,5 @@
 database.txt
+database.txt.npz
 test-vector.txt
 test-vector.tmp
 test-vector.good*

@@ -41,31 +41,36 @@ short-avx2: database.txt test-vector.txt
 	< test-vector.txt $(PERF) ./mmdist-short-avx2 > test-vector.tmp
 	@diff --report-identical-files test-vector.good test-vector.tmp
 
+venv/.ok:
+	virtualenv venv -p python3
+	./venv/bin/pip3 install -r requirements.txt
+	touch venv/.ok
+
 DEFAULT_PROBES:=100
-falconn: database.txt test-vector.txt
-	python falconnbench.py --probes $(DEFAULT_PROBES) > test-vector.tmp
+falconn: database.txt test-vector.txt venv/.ok
+	./venv/bin/python3 falconnbench.py --probes $(DEFAULT_PROBES) > test-vector.tmp
 	@diff --report-identical-files test-vector.good test-vector.tmp
 
-falconn-npz: database.txt test-vector.txt
-	python falconnbench.py --numpy-database database.txt.npz --probes $(DEFAULT_PROBES) > test-vector.tmp
+falconn-npz: database.txt test-vector.txt  venv/.ok
+	./venv/bin/python3 falconnbench.py --numpy-database database.txt.npz --probes $(DEFAULT_PROBES) > test-vector.tmp
 	@diff --report-identical-files test-vector.good test-vector.tmp
 
 CROSS_PROBES=100
-falconn-crosspolytope: database.txt test-vector.txt
-	python falconnbench.py --params crosspolytope --probes $(CROSS_PROBES) > test-vector.tmp
+falconn-crosspolytope: database.txt test-vector.txt  venv/.ok
+	./venv/bin/python3 falconnbench.py --params crosspolytope --probes $(CROSS_PROBES) > test-vector.tmp
 	@diff --report-identical-files test-vector.good test-vector.tmp
 
-falconn-crosspolytope-npz: database.txt test-vector.txt
-	python falconnbench.py --numpy-database database.txt.npz --params crosspolytope --probes $(CROSS_PROBES) > test-vector.tmp
+falconn-crosspolytope-npz: database.txt test-vector.txt venv/.ok
+	./venv/bin/python3 falconnbench.py --numpy-database database.txt.npz --params crosspolytope --probes $(CROSS_PROBES) > test-vector.tmp
 	@diff --report-identical-files test-vector.good test-vector.tmp
 
 HYPER_PROBES=200
-falconn-hyperplane: database.txt test-vector.txt
-	python falconnbench.py --params hyperplane --probes $(HYPER_PROBES) > test-vector.tmp
+falconn-hyperplane: database.txt test-vector.txt venv/.ok
+	./venv/bin/python3 falconnbench.py --params hyperplane --probes $(HYPER_PROBES) > test-vector.tmp
 	@diff --report-identical-files test-vector.good test-vector.tmp
 
-falconn-hyperplane-npz: database.txt test-vector.txt
-	python falconnbench.py --numpy-database database.txt.npz --params hyperplane --probes $(HYPER_PROBES) > test-vector.tmp
+falconn-hyperplane-npz: database.txt test-vector.txt venv/.ok
+	./venv/bin/python3 falconnbench.py --numpy-database database.txt.npz --params hyperplane --probes $(HYPER_PROBES) > test-vector.tmp
 	@diff --report-identical-files test-vector.good test-vector.tmp
 
 THRESHOLD:=48400

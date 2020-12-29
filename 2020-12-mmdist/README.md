@@ -9,35 +9,29 @@ This project contains various brute-force algorithm implementations,
 each building on the previous one, geared towards solving the nearest
 neightbour problem.
 
-In addition to brute-force, this implentation uses 
-https://github.com/falconn-lib/falconn/ (FALCONN - FAst Lookups of 
-Cosine and Other Nearest Neighbors) which is an implementation of 
+
+In addition to brute-force, take a look at the implentation using
+https://github.com/falconn-lib/falconn/ (FALCONN - FAst Lookups of
+Cosine and Other Nearest Neighbors) which is an implementation of
 state-of-the-art algorithms for the nearest neighbor search problem.
 
-To run all algorithms:
-
-```
-# first enable virtualenv and then
-python -m pip install -r requirements.txt
-make
-```
-
-To check Hyperplane FALCONN algorithm, which seems to be the fastest among 
-different parameters, run:
+To check Hyperplane FALCONN algorithm, which seems to be the fastest
+among different parameters, run:
 
 ```
 make falconn-hyperplane
 ```
 
-Number of probes was determined empirically. Smaller values make the code
-run faster but with possibility of incorrect results as the algorithms are
-approximate.
+Number of probes was determined empirically. Smaller values make the
+code run faster but with possibility of incorrect results as the
+algorithms are approximate.
 
-If you want to play with FALCONN parameters, after the first run `database.txt.npz`
-gets created which a saved `npz` NumPy file which is much faster to load (40x on my laptop):
+If you want to play with FALCONN parameters, after the first run
+`database.txt.npz` gets created which a saved `npz` NumPy file which
+is much faster to load (40x on my laptop):
 
 ```
-python falconnbench.py --numpy-database database.txt.npz --params hyperplane --probes 200 > test-vector.tmp
+python3 falconnbench.py --numpy-database database.txt.npz --params hyperplane --probes 200 > test-vector.tmp
 Reading database 979.753ms
 Building index 5245.785ms
 Total: 404.490ms, 1536 items, avg 0.263ms per query, 3797.374 qps

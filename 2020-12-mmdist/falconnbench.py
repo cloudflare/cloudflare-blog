@@ -6,7 +6,7 @@ import time
 
 
 def vector_from_hex_line(hex_line):
-    b = bytes.fromhex(hex_line)
+    b = bytes.fromhex(hex_line.strip())
     return [val for val in b]
 
 
@@ -43,10 +43,10 @@ def test_query(db, query_object, query, mean):
 
 
 def test_queries(db, probes, mean, index_params, filename):
-    start_build_index = time.monotonic_ns()
+    start_build_index = int(time.monotonic() * 1000000000)
     index = falconn.LSHIndex(index_params)
     index.setup(dataset=db)
-    end_build_index = time.monotonic_ns()
+    end_build_index = int(time.monotonic()*1000000000)
 
     print(
         f"Building index {(end_build_index-start_build_index) / 1000000.0:.3f}ms",
@@ -62,9 +62,9 @@ def test_queries(db, probes, mean, index_params, filename):
         for hex_line in f:
             query_count += 1
             vector = vector_from_hex_line(hex_line.strip())
-            start_query = time.monotonic_ns()
+            start_query = int(time.monotonic()*1000000000)
             test_query(db, query_object, vector, mean)
-            end_query = time.monotonic_ns()
+            end_query = int(time.monotonic()*1000000000)
             total_query_time += end_query - start_query
     nsperquery = total_query_time / query_count
     print(
@@ -81,7 +81,7 @@ def hyperplane_hashing_params(dimensions):
     params_hp.storage_hash_table = falconn.StorageHashTable.FlatHashTable
     params_hp.k = 19
     params_hp.l = 10
-    params_hp.num_setup_threads = 0
+    params_hp.num_setup_threads = 1
 
     return params_hp
 
@@ -94,7 +94,7 @@ def cross_polytope_hashing_params(dimensions):
     params_cp.storage_hash_table = falconn.StorageHashTable.FlatHashTable
     params_cp.k = 3
     params_cp.l = 10
-    params_cp.num_setup_threads = 0
+    params_cp.num_setup_threads = 1
     params_cp.last_cp_dimension = 16
     params_cp.num_rotations = 3
 
@@ -119,7 +119,7 @@ def main():
 
     args = parser.parse_args()
 
-    start_read_db = time.monotonic_ns()
+    start_read_db = int(time.monotonic()*1000000000)
     if args.numpy_database:
         db, mean = read_numpy_database(args.numpy_database)
     else:
@@ -128,7 +128,7 @@ def main():
         mean = np.mean(db, axis=0)
         db -= mean
         save_numpy_database(db, mean, args.database)
-    end_read_db = time.monotonic_ns()
+    end_read_db = int(time.monotonic()*1000000000)
 
     print(
         f"Reading database {(end_read_db-start_read_db) / 1000000.0:.3f}ms",

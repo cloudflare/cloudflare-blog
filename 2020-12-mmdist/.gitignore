@@ -10,3 +10,4 @@ mmdist-naive-avx2
 mmdist-short-inv
 mmdist-short-inv-avx2
 mmdist-short-avx2
+venv

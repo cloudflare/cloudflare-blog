@@ -1,0 +1,80 @@
+#!/usr/bin/env drgn
+#
+# Print callbacks registered for each Netfilter INET hook.
+#
+
+from drgn import cast
+from drgn.helpers import enum_type_to_class
+
+
+NfInetHooks = enum_type_to_class(
+    prog.type('enum nf_inet_hooks'),
+    'NfInetHooks',
+    exclude=('NF_INET_NUMHOOKS',),
+)
+
+
+def main():
+    '''
+    Walk over init_net.nf.hooks_ipv4 and .hooks_ipv6. For each hook type print
+    registered callbacks and their priority.
+    '''
+
+    global prog
+
+    # Get Netfilter state for initial network namespace
+    nf = prog['init_net'].nf
+
+    nf_hooks = {
+        'ipv4': walk_nf_hook_entries_array(prog, nf.hooks_ipv4),
+        'ipv6': walk_nf_hook_entries_array(prog, nf.hooks_ipv6),
+    }
+    for domain, hooks in sorted(nf_hooks.items()):
+        for hook, entries in sorted(hooks.items()):
+            hook = hook.name.removeprefix('NF_INET_')
+            print(f'🪝 {domain} {hook}')
+            for priority, callbacks in sorted(entries.items()):
+                callbacks = ', '.join(callbacks)
+                print(f'{priority:11} → {callbacks}')
+            print()
+
+
+def walk_nf_hook_entries_array(prog, hooks):
+    '''
+    Walk over an array of nf_hook_entries{} objects. Collect priority and
+    callbacks for each entry. Expects the array to contain NF_INET_NUMHOOKS
+    elements.
+
+    Returns a dict mapping NF_INET hook to (priority, callbacks) pair.
+    '''
+
+    if not hooks:
+        return {}
+
+    return { hook: walk_nf_hook_ops_array(prog, hooks[hook]) for hook in NfInetHooks }
+
+def walk_nf_hook_ops_array(prog, entries):
+    '''
+    Walk over an an array of nf_hook_ops{} objects embedded in nf_hook_entries{}
+    instance. Collect callback functions with their priority.
+
+    Returns a dict mapping priority to a list of callback functions.
+    '''
+    if not entries:
+        return {}
+
+    # Array of nf_hook_ops{} follows entries.hooks[]
+    num = entries.num_hook_entries
+    ops = entries.hooks[num].address_of_()
+    ops = cast('struct nf_hook_ops **', ops)
+
+    ret = {}
+    for i in range(0, num):
+        prio = ops[i].priority.value_()
+        func = prog.symbol(ops[i].hook).name
+        ret.setdefault(prio, []).append(func)
+    return ret
+
+
+if __name__ == '__main__':
+    main()

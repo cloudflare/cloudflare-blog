@@ -1,0 +1,32 @@
+#!/usr/bin/env bpftrace
+/*
+ * trace-conntrack-prerouting.bt
+ *
+ * Trace conntrack ipv4/PREROUTING callbacks when processing TCP SYN packets
+ * destined to port 2570.
+ */
+
+BEGIN
+{
+	printf("Tracing conntrack PREROUTING callbacks... Hit Ctrl-C to quit\n")
+}
+
+kprobe:ipv4_conntrack_defrag,
+kprobe:ipv4_conntrack_in
+{
+	$skb = (struct sk_buff *)arg1;
+	$iph = (struct iphdr *)($skb->head + $skb->network_header);
+	$th = (struct tcphdr *)($skb->head + $skb->transport_header);
+
+	if ($iph->protocol == 6 /* IPPROTO_TCP */ &&
+	    $th->dest == 2570 /* htons(2570) */ &&
+	    $th->syn == 1) {
+		time("%H:%M:%S ");
+		printf("%s:%u > %s:%u tcp syn %s\n",
+		       ntop($iph->saddr),
+		       (uint16)($th->source << 8) | ($th->source >> 8),
+		       ntop($iph->daddr),
+		       (uint16)($th->dest << 8) | ($th->dest >> 8),
+		       func);
+	}
+}

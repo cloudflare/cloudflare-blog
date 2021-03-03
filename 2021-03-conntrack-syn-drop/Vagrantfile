@@ -1,0 +1,45 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "fedora/33-cloud-base"
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.memory = 8192
+    libvirt.cpus = 4
+  end
+
+  config.vm.synced_folder './', '/vagrant', type: '9p', disabled: false, readonly: true
+
+  config.vm.provision "shell", inline: <<-SHELL
+    hostnamectl set-hostname ct-vm
+    dnf -y update
+    dnf -y install \
+      autoconf \
+      automake \
+      bison \
+      bpftrace \
+      bzip2-devel \
+      conntrack-tools \
+      flex \
+      gawk \
+      gcc \
+      iptables \
+      libtool \
+      make \
+      pkgconf \
+      python3 \
+      python3-devel \
+      python3-setuptools \
+      trace-cmd \
+      xz-devel \
+      zlib-devel
+    dnf -y debuginfo-install kernel
+    pip3 install drgn
+  SHELL
+
+  config.trigger.after [:provision] do |t|
+    t.name = "Reboot after provisioning"
+    t.run = { :inline => "vagrant reload" }
+  end
+end

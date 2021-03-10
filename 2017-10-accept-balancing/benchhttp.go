@@ -11,6 +11,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"crypto/tls"
 )
 
 func singleThread(ch chan string, wg *sync.WaitGroup) {
@@ -30,6 +31,7 @@ func singleThread(ch chan string, wg *sync.WaitGroup) {
 		DialContext:         dial,
 		MaxIdleConns:        0,
 		MaxIdleConnsPerHost: 0,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
 

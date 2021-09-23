@@ -97,7 +97,7 @@ inline static int io_getevents(aio_context_t ctx, long min_nr, long max_nr,
 
 do_syscall:
 	return syscall(__NR_io_getevents, ctx, min_nr - i, max_nr - i,
-		       &events[i], timeout);
+		       &events[i], timeout) + i;
 }
 
 #ifndef IOCB_CMD_POLL

@@ -1,0 +1,47 @@
+$ gdb -q /usr/lib/debug/vmlinux-5.4.14-cloudflare-2020.1.11
+Reading symbols from /usr/lib/debug/vmlinux-5.4.14-cloudflare-2020.1.11...done.
+(gdb) set disassembly-flavor intel
+(gdb) disassemble skb_gso_transport_seglen
+Dump of assembler code for function skb_gso_transport_seglen:
+   0xffffffff816e7210 <+0>:     call   0xffffffff81a01470 <__fentry__>
+   0xffffffff816e7215 <+5>:     mov    rcx,QWORD PTR [rdi+0xc0]
+   0xffffffff816e721c <+12>:    mov    edx,DWORD PTR [rdi+0xbc]
+   0xffffffff816e7222 <+18>:    add    rdx,rcx
+   0xffffffff816e7225 <+21>:    mov    eax,DWORD PTR [rdx+0x18]
+   0xffffffff816e7228 <+24>:    mov    r8d,eax
+   0xffffffff816e722b <+27>:    and    r8d,0x11
+   0xffffffff816e722f <+31>:    test   BYTE PTR [rdi+0x81],0x20
+   0xffffffff816e7236 <+38>:    je     0xffffffff816e7268 <skb_gso_transport_seglen+88>
+   0xffffffff816e7238 <+40>:    movzx  eax,WORD PTR [rdi+0xaa]
+   0xffffffff816e723f <+47>:    movzx  esi,WORD PTR [rdi+0xb2]
+   0xffffffff816e7246 <+54>:    add    rcx,rax
+   0xffffffff816e7249 <+57>:    sub    rax,rsi
+   0xffffffff816e724c <+60>:    test   r8d,r8d
+   0xffffffff816e724f <+63>:    mov    rsi,rax
+   0xffffffff816e7252 <+66>:    je     0xffffffff816e7261 <skb_gso_transport_seglen+81>
+   0xffffffff816e7254 <+68>:    movzx  eax,BYTE PTR [rcx+0xc]
+   0xffffffff816e7258 <+72>:    shr    al,0x4
+   0xffffffff816e725b <+75>:    movzx  eax,al
+   0xffffffff816e725e <+78>:    lea    eax,[rsi+rax*4]
+   0xffffffff816e7261 <+81>:    movzx  edx,WORD PTR [rdx+0x4]
+   0xffffffff816e7265 <+85>:    add    eax,edx
+   0xffffffff816e7267 <+87>:    ret
+   0xffffffff816e7268 <+88>:    test   r8d,r8d
+   0xffffffff816e726b <+91>:    je     0xffffffff816e7289 <skb_gso_transport_seglen+121>
+   0xffffffff816e726d <+93>:    movzx  eax,WORD PTR [rdi+0xb2]
+   0xffffffff816e7274 <+100>:   movzx  edx,WORD PTR [rdx+0x4]
+   0xffffffff816e7278 <+104>:   movzx  eax,BYTE PTR [rcx+rax*1+0xc]
+   0xffffffff816e727d <+109>:   shr    al,0x4
+   0xffffffff816e7280 <+112>:   movzx  eax,al
+   0xffffffff816e7283 <+115>:   shl    eax,0x2
+   0xffffffff816e7286 <+118>:   add    eax,edx
+   0xffffffff816e7288 <+120>:   ret
+   0xffffffff816e7289 <+121>:   test   ah,0x40
+   0xffffffff816e728c <+124>:   jne    0xffffffff816e729d <skb_gso_transport_seglen+141>
+   0xffffffff816e728e <+126>:   and    eax,0x20000
+   0xffffffff816e7293 <+131>:   mov    ecx,0x8
+   0xffffffff816e7298 <+136>:   cmovne eax,ecx
+   0xffffffff816e729b <+139>:   jmp    0xffffffff816e7261 <skb_gso_transport_seglen+81>
+   0xffffffff816e729d <+141>:   mov    eax,0xc
+   0xffffffff816e72a2 <+146>:   jmp    0xffffffff816e7261 <skb_gso_transport_seglen+81>
+End of assembler dump.

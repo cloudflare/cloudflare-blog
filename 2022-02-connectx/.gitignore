@@ -1,0 +1,4 @@
+venv
+.coverage
+__pycache__
+ebpf_connect4/*.o

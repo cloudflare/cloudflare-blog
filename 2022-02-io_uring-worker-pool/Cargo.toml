@@ -1,0 +1,17 @@
+[package]
+name = "io_uring-worker-pool"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.52"
+io-uring = { git = "https://github.com/tokio-rs/io-uring", rev = "0fdc1e3be85b", features = ["unstable"] }
+libc = "0.2.112"
+nix = "0.23.1"
+structopt = { version = "0.3", default-features = false }
+
+[[bin]]
+name = "udp-read"
+path = "src/bin/udp_read.rs"

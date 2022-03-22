@@ -1,0 +1,18 @@
+name = "status-page"
+# type = "javascript" is required to use the `[build]` section
+type = "javascript"
+workers_dev = true
+account_id = "<enter-your-account-id>"
+route = ""
+zone_id = ""
+compatibility_date = "2022-02-11"
+
+[build.upload]
+# Upload the code directly from the src directory.
+dir = "src"
+# The "modules" upload format is required for all projects that export a Durable Objects class
+format = "modules"
+main = "./index.mjs"
+
+[durable_objects]
+bindings = [{name = "status", class_name = "Status"}]

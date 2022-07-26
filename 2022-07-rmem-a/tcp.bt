@@ -1,0 +1,88 @@
+#include <net/sock.h>
+#include <linux/snmp.h>>
+#include <linux/tcp.h>>
+
+BEGIN {
+	printf(",tcprcvcoalesce,tcprcvcollapsed,tcprcvqdrop,rcv\\\\_ssthresh,acked,skmem\\\\_rb,recv-q,skmem\\\\_r,rcv\\\\_win\n");
+	@idx = 0;
+	@coalesce = 0;
+	@collapsed=0;
+	@start=nsecs;
+	@incoalesce=0;
+	@drop = 0;
+        @ack = 0;
+}
+
+
+kprobe:tcp_collapse {
+	$sk = (struct sock *) arg0;
+	$isk = (struct inet_sock *) $sk;
+	if ($isk->inet_sport  != 0xd204) {return;}
+	@collapsed += 1;
+}
+
+kprobe:kfree_skb_reason {
+	$reason = (struct sock *) arg1;
+	if ($reason == (uint64)16){
+		@drop += 1;
+	}
+}
+
+kprobe:tcp_try_coalesce {
+	$sk = (struct sock *) arg0;
+	$isk = (struct inet_sock *) $sk;
+	if ($isk->inet_sport != 0xd204) {return;}
+	@incoalesce = 1;
+}
+
+kretprobe:tcp_try_coalesce {
+	if (@incoalesce) {
+		@incoalesce = 0;
+		if (retval ) {
+			@coalesce += 1;
+		}
+	}
+}
+
+kprobe:tcp_rcv_established {
+	$sk = (struct sock *) arg0;
+	$tp = (struct tcp_sock *) $sk;
+	$skb = (struct sk_buff *) arg1;
+	$isk = (struct inet_sock *) $sk;
+	$p = $isk->inet_sport;
+	if ($p != 0xd204) {return;}
+	@idx += 1;
+
+	$cc = 0;
+	if (@coalesce > 0) {
+		$cc = 1;
+	}
+
+	$siocinq = $tp->rcv_nxt - $tp->copied_seq;
+
+        $newack = (uint32)$tp->rcv_wup;
+        $ackdelta = 0;
+        if (@ack == 0) {
+              @ack = $newack;
+        } else {
+               $ackdelta = $newack - (uint32)@ack;
+        }
+
+	$x = (int64) $skb->len;
+	printf("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u\n",
+	       @idx,
+	       $cc,
+	       @collapsed,
+	       @drop,
+	       $tp->rcv_ssthresh,
+               $ackdelta,
+	       $sk->sk_rcvbuf,
+	       $siocinq,
+	       $sk->sk_backlog.rmem_alloc.counter,
+	       (uint64)$tp->rcv_wnd - ((uint64)$tp->rcv_nxt - (uint64)$tp->rcv_wup)
+               );
+	@coalesce = 0;
+	@collapsed=0;
+	@drop=0;
+}
+

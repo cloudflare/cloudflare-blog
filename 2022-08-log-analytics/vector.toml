@@ -1,0 +1,19 @@
+[sources.logs]
+type = "demo_logs"
+format = "json"
+decoding.codec = "json"
+
+[sinks.clickhouse]
+inputs = ["logs"]
+type = "clickhouse"
+database = "r0"
+endpoint = "http://clickhouse-0.localhost:8123"
+table = "logs"
+compression = "gzip"
+tls.verify_hostname = false
+auth.user = "demouser"
+auth.password = "239QV8JkGmF9AZM"
+auth.strategy = "basic"
+batch.timeout_secs = 10
+request.concurrency = "adaptive"
+

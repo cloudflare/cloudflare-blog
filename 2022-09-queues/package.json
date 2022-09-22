@@ -1,9 +1,11 @@
 {
   "name": "queues-blog-example",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "simple_load": "sh simple_load.sh"
+  },
   "author": "",
   "license": "ISC",
   "devDependencies": {

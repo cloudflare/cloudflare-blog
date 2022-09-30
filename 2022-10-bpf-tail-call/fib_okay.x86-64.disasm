@@ -1,0 +1,188 @@
+
+fib_okay.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <fib>:
+   0:	push   %r15
+   2:	mov    %rdi,%rax
+   5:	sub    $0x1,%rdi
+   9:	push   %r14
+   b:	push   %r13
+   d:	push   %r12
+   f:	push   %rbp
+  10:	push   %rbx
+  11:	sub    $0x98,%rsp
+  18:	mov    %rdi,(%rsp)
+  1c:	movq   $0x0,0x18(%rsp)
+  25:	cmp    $0x1,%rax
+  29:	jbe    326 <fib+0x326>
+  2f:	cmpq   $0x1,(%rsp)
+  34:	je     2fb <fib+0x2fb>
+  3a:	movq   $0x0,0x20(%rsp)
+  43:	mov    (%rsp),%rax
+  47:	sub    $0x1,%rax
+  4b:	mov    %rax,0x8(%rsp)
+  50:	cmpq   $0x1,0x8(%rsp)
+  56:	mov    %rax,0x38(%rsp)
+  5b:	je     2be <fib+0x2be>
+  61:	movq   $0x0,0x28(%rsp)
+  6a:	mov    0x8(%rsp),%rax
+  6f:	sub    $0x1,%rax
+  73:	mov    %rax,0x10(%rsp)
+  78:	cmpq   $0x1,0x10(%rsp)
+  7e:	mov    %rax,0x40(%rsp)
+  83:	je     224 <fib+0x224>
+  89:	movq   $0x0,0x30(%rsp)
+  92:	mov    0x10(%rsp),%rax
+  97:	sub    $0x1,%rax
+  9b:	mov    %rax,0x48(%rsp)
+  a0:	mov    %rax,%r11
+  a3:	cmp    $0x1,%r11
+  a7:	je     27b <fib+0x27b>
+  ad:	lea    -0x1(%r11),%rax
+  b1:	xor    %ecx,%ecx
+  b3:	mov    %rax,0x50(%rsp)
+  b8:	mov    %rax,%rbp
+  bb:	cmp    $0x1,%rbp
+  bf:	je     26e <fib+0x26e>
+  c5:	lea    -0x1(%rbp),%rsi
+  c9:	xor    %r12d,%r12d
+  cc:	mov    %rsi,%rdx
+  cf:	cmp    $0x1,%rdx
+  d3:	je     1a4 <fib+0x1a4>
+  d9:	lea    -0x2(%rdx),%r8
+  dd:	xor    %r15d,%r15d
+  e0:	mov    %r8,%r9
+  e3:	mov    %r9,%rbx
+  e6:	xor    %r13d,%r13d
+  e9:	test   %r9,%r9
+  ec:	je     238 <fib+0x238>
+  f2:	mov    %rbx,%r10
+  f5:	xor    %r14d,%r14d
+  f8:	cmp    $0x1,%rbx
+  fc:	je     19c <fib+0x19c>
+ 102:	nopw   0x0(%rax,%rax,1)
+ 108:	lea    -0x1(%r10),%rdi
+ 10c:	mov    %r8,0x88(%rsp)
+ 114:	mov    %rsi,0x80(%rsp)
+ 11c:	mov    %r9,0x78(%rsp)
+ 121:	mov    %rdx,0x70(%rsp)
+ 126:	mov    %r11,0x68(%rsp)
+ 12b:	mov    %rcx,0x60(%rsp)
+ 130:	mov    %r10,0x58(%rsp)
+ 135:	call   13a <fib+0x13a>
+ 13a:	mov    0x58(%rsp),%r10
+ 13f:	mov    0x60(%rsp),%rcx
+ 144:	add    %rax,%r14
+ 147:	mov    0x68(%rsp),%r11
+ 14c:	mov    0x70(%rsp),%rdx
+ 151:	sub    $0x2,%r10
+ 155:	mov    0x78(%rsp),%r9
+ 15a:	mov    0x80(%rsp),%rsi
+ 162:	cmp    $0x1,%r10
+ 166:	mov    0x88(%rsp),%r8
+ 16e:	ja     108 <fib+0x108>
+ 170:	add    $0x1,%r14
+ 174:	lea    -0x2(%rbx),%rax
+ 178:	sub    $0x1,%rbx
+ 17c:	add    %r14,%r13
+ 17f:	cmp    $0x1,%rbx
+ 183:	jbe    268 <fib+0x268>
+ 189:	mov    %rax,%rbx
+ 18c:	xor    %r14d,%r14d
+ 18f:	mov    %rbx,%r10
+ 192:	cmp    $0x1,%rbx
+ 196:	jne    108 <fib+0x108>
+ 19c:	mov    $0x1,%r14d
+ 1a2:	jmp    174 <fib+0x174>
+ 1a4:	mov    $0x1,%r15d
+ 1aa:	mov    $0xffffffffffffffff,%r8
+ 1b1:	sub    $0x1,%rdx
+ 1b5:	add    %r15,%r12
+ 1b8:	cmp    $0x1,%rdx
+ 1bc:	jbe    1c6 <fib+0x1c6>
+ 1be:	mov    %r8,%rdx
+ 1c1:	jmp    cf <fib+0xcf>
+ 1c6:	add    $0x1,%r12
+ 1ca:	add    %r12,%rcx
+ 1cd:	sub    $0x2,%rbp
+ 1d1:	cmp    $0x1,%rsi
+ 1d5:	ja     bb <fib+0xbb>
+ 1db:	add    $0x1,%rcx
+ 1df:	add    %rcx,0x30(%rsp)
+ 1e4:	sub    $0x2,%r11
+ 1e8:	cmpq   $0x1,0x50(%rsp)
+ 1ee:	ja     a3 <fib+0xa3>
+ 1f4:	mov    0x30(%rsp),%rax
+ 1f9:	add    $0x1,%rax
+ 1fd:	add    %rax,0x28(%rsp)
+ 202:	mov    0x10(%rsp),%rax
+ 207:	sub    $0x2,%rax
+ 20b:	cmpq   $0x1,0x48(%rsp)
+ 211:	jbe    28e <fib+0x28e>
+ 213:	mov    %rax,0x10(%rsp)
+ 218:	cmpq   $0x1,0x10(%rsp)
+ 21e:	jne    89 <fib+0x89>
+ 224:	movq   $0x0,0x48(%rsp)
+ 22d:	mov    $0x1,%eax
+ 232:	jmp    1fd <fib+0x1fd>
+ 234:	nopl   0x0(%rax)
+ 238:	mov    $0x1,%r13d
+ 23e:	add    %r13,%r15
+ 241:	lea    -0x2(%r9),%rax
+ 245:	cmp    $0x1,%r9
+ 249:	jbe    258 <fib+0x258>
+ 24b:	mov    %rax,%r9
+ 24e:	jmp    e3 <fib+0xe3>
+ 253:	nopl   0x0(%rax,%rax,1)
+ 258:	add    $0x1,%r15
+ 25c:	jmp    1b1 <fib+0x1b1>
+ 261:	nopl   0x0(%rax)
+ 268:	add    $0x1,%r13
+ 26c:	jmp    23e <fib+0x23e>
+ 26e:	mov    $0x1,%r12d
+ 274:	xor    %esi,%esi
+ 276:	jmp    1ca <fib+0x1ca>
+ 27b:	movq   $0x0,0x50(%rsp)
+ 284:	mov    $0x1,%ecx
+ 289:	jmp    1df <fib+0x1df>
+ 28e:	mov    0x28(%rsp),%rax
+ 293:	add    $0x1,%rax
+ 297:	add    %rax,0x20(%rsp)
+ 29c:	mov    0x8(%rsp),%rax
+ 2a1:	sub    $0x2,%rax
+ 2a5:	cmpq   $0x1,0x40(%rsp)
+ 2ab:	jbe    2ce <fib+0x2ce>
+ 2ad:	mov    %rax,0x8(%rsp)
+ 2b2:	cmpq   $0x1,0x8(%rsp)
+ 2b8:	jne    61 <fib+0x61>
+ 2be:	movq   $0x0,0x40(%rsp)
+ 2c7:	mov    $0x1,%eax
+ 2cc:	jmp    297 <fib+0x297>
+ 2ce:	mov    0x20(%rsp),%rax
+ 2d3:	add    $0x1,%rax
+ 2d7:	add    %rax,0x18(%rsp)
+ 2dc:	mov    (%rsp),%rax
+ 2e0:	sub    $0x2,%rax
+ 2e4:	cmpq   $0x1,0x38(%rsp)
+ 2ea:	jbe    30b <fib+0x30b>
+ 2ec:	mov    %rax,(%rsp)
+ 2f0:	cmpq   $0x1,(%rsp)
+ 2f5:	jne    3a <fib+0x3a>
+ 2fb:	movq   $0x0,0x38(%rsp)
+ 304:	mov    $0x1,%eax
+ 309:	jmp    2d7 <fib+0x2d7>
+ 30b:	mov    0x18(%rsp),%rax
+ 310:	add    $0x1,%rax
+ 314:	add    $0x98,%rsp
+ 31b:	pop    %rbx
+ 31c:	pop    %rbp
+ 31d:	pop    %r12
+ 31f:	pop    %r13
+ 321:	pop    %r14
+ 323:	pop    %r15
+ 325:	ret    
+ 326:	mov    $0x1,%eax
+ 32b:	jmp    314 <fib+0x314>

@@ -1,0 +1,23 @@
+
+fib_cool.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <fib>:
+   0:	cmp    $0x1,%rdi
+   4:	jbe    30 <fib+0x30>
+   6:	mov    $0x1,%eax
+   b:	mov    $0x1,%edx
+  10:	jmp    1b <fib+0x1b>
+  12:	nopw   0x0(%rax,%rax,1)
+  18:	mov    %r8,%rax
+  1b:	sub    $0x1,%rdi
+  1f:	lea    (%rdx,%rax,1),%r8
+  23:	mov    %rax,%rdx
+  26:	cmp    $0x1,%rdi
+  2a:	jne    18 <fib+0x18>
+  2c:	mov    %r8,%rax
+  2f:	ret    
+  30:	mov    $0x1,%r8d
+  36:	jmp    2c <fib+0x2c>

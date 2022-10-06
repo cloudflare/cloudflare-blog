@@ -1,0 +1,21 @@
+
+tail_call_ex2.o:	file format elf64-bpf
+
+Disassembly of section .text:
+
+0000000000000000 <sub_func>:
+       0:	18 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00	r2 = 0 ll
+       2:	b7 03 00 00 00 00 00 00	r3 = 0
+       3:	85 00 00 00 0c 00 00 00	call 12
+       4:	b7 00 00 00 0d f0 00 00	r0 = 61453
+       5:	95 00 00 00 00 00 00 00	exit
+
+Disassembly of section tc:
+
+0000000000000000 <target_prog>:
+       0:	b7 00 00 00 fe ca 00 00	r0 = 51966
+       1:	95 00 00 00 00 00 00 00	exit
+
+0000000000000010 <entry_prog>:
+       2:	85 10 00 00 ff ff ff ff	call -1
+       3:	95 00 00 00 00 00 00 00	exit

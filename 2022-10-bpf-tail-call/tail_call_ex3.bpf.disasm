@@ -1,0 +1,26 @@
+
+tail_call_ex3.o:	file format elf64-bpf
+
+Disassembly of section .text:
+
+0000000000000000 <bring_order>:
+       0:	r2 = 0 ll
+       2:	r3 = 0
+       3:	call 12
+       4:	r0 = 61453
+       5:	exit
+
+Disassembly of section tc:
+
+0000000000000000 <barista>:
+       0:	r0 = 51966
+       1:	exit
+
+0000000000000010 <server1>:
+       2:	call -1
+       3:	r0 = 61453
+       4:	exit
+
+0000000000000028 <server2>:
+       5:	call -1
+       6:	exit

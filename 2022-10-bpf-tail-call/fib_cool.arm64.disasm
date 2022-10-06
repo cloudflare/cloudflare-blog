@@ -1,0 +1,22 @@
+
+fib_cool.arm64.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <fib>:
+   0:	mov	x1, x0
+   4:	cmp	x0, #0x1
+   8:	b.ls	34 <fib+0x34>  // b.plast
+   c:	mov	x2, #0x1                   	// #1
+  10:	mov	x3, x2
+  14:	nop
+  18:	add	x0, x3, x2
+  1c:	sub	x1, x1, #0x1
+  20:	mov	x3, x2
+  24:	mov	x2, x0
+  28:	cmp	x1, #0x1
+  2c:	b.ne	18 <fib+0x18>  // b.any
+  30:	ret
+  34:	mov	x0, #0x1                   	// #1
+  38:	ret

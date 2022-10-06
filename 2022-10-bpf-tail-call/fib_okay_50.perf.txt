@@ -1,0 +1,208 @@
+ Percent |	Source code & Disassembly of fib_okay for cycles (89951 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000401180 <fib>:
+         : 6      fib():
+         : 4      #include <stdint.h>
+         :
+         : 6      uint64_t fib(uint64_t n)
+         : 7      {
+    0.00 :   401180: push   %r15
+    0.00 :   401182: mov    %rdi,%rax
+    0.00 :   401185: sub    $0x1,%rdi
+    2.31 :   401189: push   %r14
+    0.01 :   40118b: push   %r13
+    0.00 :   40118d: push   %r12
+    0.00 :   40118f: push   %rbp
+    2.17 :   401190: push   %rbx
+    0.02 :   401191: sub    $0x98,%rsp
+    0.01 :   401198: mov    %rdi,(%rsp)
+         : 5      if (n == 0 || n == 1)
+    2.34 :   40119c: movq   $0x0,0x18(%rsp)
+    0.00 :   4011a5: cmp    $0x1,%rax
+    0.85 :   4011a9: jbe    4014a6 <fib+0x326>
+    0.26 :   4011af: cmpq   $0x1,(%rsp)
+    0.66 :   4011b4: je     40147b <fib+0x2fb>
+    0.83 :   4011ba: movq   $0x0,0x20(%rsp)
+    0.02 :   4011c3: mov    (%rsp),%rax
+    0.01 :   4011c7: sub    $0x1,%rax
+    0.60 :   4011cb: mov    %rax,0x8(%rsp)
+    1.23 :   4011d0: cmpq   $0x1,0x8(%rsp)
+    0.00 :   4011d6: mov    %rax,0x38(%rsp)
+    0.48 :   4011db: je     40143e <fib+0x2be>
+    0.60 :   4011e1: movq   $0x0,0x28(%rsp)
+    0.57 :   4011ea: mov    0x8(%rsp),%rax
+    0.03 :   4011ef: sub    $0x1,%rax
+    0.95 :   4011f3: mov    %rax,0x10(%rsp)
+    1.61 :   4011f8: cmpq   $0x1,0x10(%rsp)
+    0.44 :   4011fe: mov    %rax,0x40(%rsp)
+    1.03 :   401203: je     4013a4 <fib+0x224>
+    0.37 :   401209: movq   $0x0,0x30(%rsp)
+    0.19 :   401212: mov    0x10(%rsp),%rax
+    0.27 :   401217: sub    $0x1,%rax
+    0.78 :   40121b: mov    %rax,0x48(%rsp)
+    0.29 :   401220: mov    %rax,%r11
+    0.16 :   401223: cmp    $0x1,%r11
+    0.32 :   401227: je     4013fb <fib+0x27b>
+    0.27 :   40122d: lea    -0x1(%r11),%rax
+    0.51 :   401231: xor    %ecx,%ecx
+    1.11 :   401233: mov    %rax,0x50(%rsp)
+    0.13 :   401238: mov    %rax,%rbp
+    0.11 :   40123b: cmp    $0x1,%rbp
+    1.52 :   40123f: je     4013ee <fib+0x26e>
+    0.27 :   401245: lea    -0x1(%rbp),%rsi
+    0.41 :   401249: xor    %r12d,%r12d
+    0.50 :   40124c: mov    %rsi,%rdx
+    0.22 :   40124f: cmp    $0x1,%rdx
+    0.34 :   401253: je     401324 <fib+0x1a4>
+    0.14 :   401259: lea    -0x2(%rdx),%r8
+    0.34 :   40125d: xor    %r15d,%r15d
+    1.13 :   401260: mov    %r8,%r9
+    0.24 :   401263: mov    %r9,%rbx
+    0.11 :   401266: xor    %r13d,%r13d
+    0.13 :   401269: test   %r9,%r9
+    1.32 :   40126c: je     4013b8 <fib+0x238>
+    1.14 :   401272: mov    %rbx,%r10
+    0.01 :   401275: xor    %r14d,%r14d
+    0.06 :   401278: cmp    $0x1,%rbx
+    0.33 :   40127c: je     40131c <fib+0x19c>
+    0.09 :   401282: nopw   0x0(%rax,%rax,1)
+         : 8      return 1;
+         :
+         : 10     return fib(n - 1) + fib(n - 2);
+    0.82 :   401288: lea    -0x1(%r10),%rdi
+    0.07 :   40128c: mov    %r8,0x88(%rsp)
+    0.03 :   401294: mov    %rsi,0x80(%rsp)
+    1.55 :   40129c: mov    %r9,0x78(%rsp)
+    0.74 :   4012a1: mov    %rdx,0x70(%rsp)
+    0.02 :   4012a6: mov    %r11,0x68(%rsp)
+    0.04 :   4012ab: mov    %rcx,0x60(%rsp)
+    1.56 :   4012b0: mov    %r10,0x58(%rsp)
+    3.06 :   4012b5: call   401180 <fib>
+    0.02 :   4012ba: mov    0x58(%rsp),%r10
+         : 5      if (n == 0 || n == 1)
+    0.01 :   4012bf: mov    0x60(%rsp),%rcx
+    2.24 :   4012c4: add    %rax,%r14
+    0.01 :   4012c7: mov    0x68(%rsp),%r11
+    0.01 :   4012cc: mov    0x70(%rsp),%rdx
+         : 8      return fib(n - 1) + fib(n - 2);
+    0.00 :   4012d1: sub    $0x2,%r10
+         : 5      if (n == 0 || n == 1)
+    2.27 :   4012d5: mov    0x78(%rsp),%r9
+    0.01 :   4012da: mov    0x80(%rsp),%rsi
+    0.00 :   4012e2: cmp    $0x1,%r10
+    0.00 :   4012e6: mov    0x88(%rsp),%r8
+    2.46 :   4012ee: ja     401288 <fib+0x108>
+    0.00 :   4012f0: add    $0x1,%r14
+    0.00 :   4012f4: lea    -0x2(%rbx),%rax
+    0.00 :   4012f8: sub    $0x1,%rbx
+    1.43 :   4012fc: add    %r14,%r13
+    0.00 :   4012ff: cmp    $0x1,%rbx
+    1.08 :   401303: jbe    4013e8 <fib+0x268>
+    0.00 :   401309: mov    %rax,%rbx
+    0.00 :   40130c: xor    %r14d,%r14d
+    0.88 :   40130f: mov    %rbx,%r10
+    0.00 :   401312: cmp    $0x1,%rbx
+    0.54 :   401316: jne    401288 <fib+0x108>
+    0.01 :   40131c: mov    $0x1,%r14d
+    0.68 :   401322: jmp    4012f4 <fib+0x174>
+    0.01 :   401324: mov    $0x1,%r15d
+    0.00 :   40132a: mov    $0xffffffffffffffff,%r8
+    0.01 :   401331: sub    $0x1,%rdx
+    0.34 :   401335: add    %r15,%r12
+    0.01 :   401338: cmp    $0x1,%rdx
+    1.14 :   40133c: jbe    401346 <fib+0x1c6>
+    0.69 :   40133e: mov    %r8,%rdx
+    0.74 :   401341: jmp    40124f <fib+0xcf>
+    0.01 :   401346: add    $0x1,%r12
+         : 6      return 1;
+    0.06 :   40134a: add    %r12,%rcx
+         : 5      if (n == 0 || n == 1)
+    0.00 :   40134d: sub    $0x2,%rbp
+    0.20 :   401351: cmp    $0x1,%rsi
+    1.12 :   401355: ja     40123b <fib+0xbb>
+    1.59 :   40135b: add    $0x1,%rcx
+    0.47 :   40135f: add    %rcx,0x30(%rsp)
+    0.16 :   401364: sub    $0x2,%r11
+    1.99 :   401368: cmpq   $0x1,0x50(%rsp)
+    0.82 :   40136e: ja     401223 <fib+0xa3>
+    0.25 :   401374: mov    0x30(%rsp),%rax
+    0.25 :   401379: add    $0x1,%rax
+    1.93 :   40137d: add    %rax,0x28(%rsp)
+    0.16 :   401382: mov    0x10(%rsp),%rax
+    1.43 :   401387: sub    $0x2,%rax
+    1.09 :   40138b: cmpq   $0x1,0x48(%rsp)
+    2.02 :   401391: jbe    40140e <fib+0x28e>
+    0.00 :   401393: mov    %rax,0x10(%rsp)
+    0.08 :   401398: cmpq   $0x1,0x10(%rsp)
+    0.96 :   40139e: jne    401209 <fib+0x89>
+    0.15 :   4013a4: movq   $0x0,0x48(%rsp)
+    0.00 :   4013ad: mov    $0x1,%eax
+    1.48 :   4013b2: jmp    40137d <fib+0x1fd>
+    0.00 :   4013b4: nopl   0x0(%rax)
+    0.06 :   4013b8: mov    $0x1,%r13d
+         : 6      return 1;
+    0.02 :   4013be: add    %r13,%r15
+         : 5      if (n == 0 || n == 1)
+    0.00 :   4013c1: lea    -0x2(%r9),%rax
+    0.00 :   4013c5: cmp    $0x1,%r9
+    1.65 :   4013c9: jbe    4013d8 <fib+0x258>
+    0.88 :   4013cb: mov    %rax,%r9
+    0.86 :   4013ce: jmp    401263 <fib+0xe3>
+    0.00 :   4013d3: nopl   0x0(%rax,%rax,1)
+    0.01 :   4013d8: add    $0x1,%r15
+    1.55 :   4013dc: jmp    401331 <fib+0x1b1>
+    0.00 :   4013e1: nopl   0x0(%rax)
+    0.01 :   4013e8: add    $0x1,%r13
+    1.29 :   4013ec: jmp    4013be <fib+0x23e>
+    0.06 :   4013ee: mov    $0x1,%r12d
+    0.00 :   4013f4: xor    %esi,%esi
+    1.52 :   4013f6: jmp    40134a <fib+0x1ca>
+    0.04 :   4013fb: movq   $0x0,0x50(%rsp)
+    0.00 :   401404: mov    $0x1,%ecx
+    0.33 :   401409: jmp    40135f <fib+0x1df>
+    0.31 :   40140e: mov    0x28(%rsp),%rax
+    0.17 :   401413: add    $0x1,%rax
+    2.11 :   401417: add    %rax,0x20(%rsp)
+    0.07 :   40141c: mov    0x8(%rsp),%rax
+    0.46 :   401421: sub    $0x2,%rax
+    0.03 :   401425: cmpq   $0x1,0x40(%rsp)
+    2.25 :   40142b: jbe    40144e <fib+0x2ce>
+    0.00 :   40142d: mov    %rax,0x8(%rsp)
+    0.06 :   401432: cmpq   $0x1,0x8(%rsp)
+    0.69 :   401438: jne    4011e1 <fib+0x61>
+    0.25 :   40143e: movq   $0x0,0x40(%rsp)
+    0.00 :   401447: mov    $0x1,%eax
+    0.52 :   40144c: jmp    401417 <fib+0x297>
+    0.28 :   40144e: mov    0x20(%rsp),%rax
+    0.18 :   401453: add    $0x1,%rax
+    2.06 :   401457: add    %rax,0x18(%rsp)
+    0.21 :   40145c: mov    (%rsp),%rax
+    1.05 :   401460: sub    $0x2,%rax
+    0.01 :   401464: cmpq   $0x1,0x38(%rsp)
+    2.50 :   40146a: jbe    40148b <fib+0x30b>
+    0.01 :   40146c: mov    %rax,(%rsp)
+    0.06 :   401470: cmpq   $0x1,(%rsp)
+    0.54 :   401475: jne    4011ba <fib+0x3a>
+    0.48 :   40147b: movq   $0x0,0x38(%rsp)
+    0.00 :   401484: mov    $0x1,%eax
+    1.04 :   401489: jmp    401457 <fib+0x2d7>
+    0.66 :   40148b: mov    0x18(%rsp),%rax
+    0.30 :   401490: add    $0x1,%rax
+         : 9      }
+    0.01 :   401494: add    $0x98,%rsp
+    1.20 :   40149b: pop    %rbx
+    0.04 :   40149c: pop    %rbp
+    1.15 :   40149d: pop    %r12
+    0.01 :   40149f: pop    %r13
+    1.31 :   4014a1: pop    %r14
+    0.01 :   4014a3: pop    %r15
+    2.31 :   4014a5: ret
+         : 5      if (n == 0 || n == 1)
+    0.07 :   4014a6: mov    $0x1,%eax
+         : 6      return 1;
+    0.77 :   4014ab: jmp    401494 <fib+0x314>

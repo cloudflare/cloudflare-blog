@@ -1,7 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
+
 import argparse
 import itertools
-import math
+import statistics
 import sys
 
 parser = argparse.ArgumentParser(description='Print log-2 histogram, like systemtap')
@@ -31,10 +32,10 @@ M.sort(reverse=True)
 totalcount = len(M)
 minval = M[-1]
 maxval = M[0]
-avgval = sum(M) / float(len(M))
-devval = math.sqrt(sum([(m - avgval)**2 for m in M]) / float(len(M)))
+avgval = statistics.mean(M)
+devval = statistics.stdev(M)
+medval = statistics.median(M)
 
-medval = M[len(M)/2]
 
 KV = []
 
@@ -65,35 +66,41 @@ maxcount = float(max(c for _, _, c in KV))
 maxbound = KV[-1][0]
 boundl = max(len(str(maxbound)), len('value'))
 
-print "%s min:%.2f avg:%.2f med=%.2f max:%.2f dev:%.2f count:%d" % (
+print_values = "%s min:%.2f avg:%.2f med=%.2f max:%.2f dev:%.2f count:%d" % (
     args.title,
     minval,
     avgval,
     medval,
     maxval,
     devval,
-    totalcount,
+    totalcount
 )
-print "%s:" % (
+print(print_values)
+
+print_title = "%s:" % (
     args.title,
 )
-print "%*s |%*s %s" % (
+print(print_title)
+
+print_column = "%*s |%*s %s" % (
     boundl+1,
     "value",
     args.columns,
     "-" * args.columns,
     "count"
 )
+print(print_column)
 
 for boundb, bound, c in KV:
     if args.percentage:
         cp = "%5.2f%%" % ((c / float(totalcount))*100.0,)
     else:
         cp = "%d" % (c,)
-    print "%*d |%*s %s" % (
+    print_bound = "%*d |%*s %s" % (
         boundl + 1,
         boundb,
         args.columns,
         "*" * int(args.columns * (c/maxcount)),
         cp
     )
+    print(print_bound)

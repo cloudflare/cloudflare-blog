@@ -1,0 +1,12 @@
+name = "queues-blog-example"
+main = "src/index.ts"
+compatibility_date = "2022-09-20"
+
+[[queues.producers]]
+queue = "request-queue"
+binding = "QUEUE"
+
+[[queues.consumers]]
+queue = "request-queue"
+max_batch_size = 10
+max_batch_timeout = 1

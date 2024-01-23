@@ -31,6 +31,8 @@ time.sleep(6)
 utils.ss(port)
 # the point: user-timeout doesn't kick in
 
+t0 = time.time()
+
 c.send(b'hello world')
 
 time.sleep(1)

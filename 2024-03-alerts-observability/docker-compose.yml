@@ -1,0 +1,164 @@
+version: '3.1'
+
+volumes:
+    prometheus_data: {}
+    grafana_data: {}
+
+services:
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - 8080:8080
+    restart: always
+    deploy:
+      mode: global
+
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - 9090:9090
+    links:
+      - cadvisor:cadvisor
+      - alertmanager:alertmanager
+    depends_on:
+      - cadvisor
+    restart: always
+    deploy:
+      mode: global
+
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    ports:
+      - 9093:9093
+    volumes:
+      - ./alertmanager/:/etc/alertmanager/
+      - ./alertmanager/amtool:/bin/amtool
+    restart: always
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+    deploy:
+      mode: global
+
+  alertmanager_silence:
+    image: prom/alertmanager:v0.26.0
+    volumes:
+      - ./alertmanager/:/etc/alertmanager/
+      - ./alertmanager/amtool:/bin/amtool
+      - ./alertmanager/silence_entrypoint.sh:/silence_entrypoint.sh
+    depends_on:
+      alertmanager:
+        condition: service_started
+    restart: 'no'
+    entrypoint: '/silence_entrypoint.sh'
+
+  blackbox_exporter:
+    image: prom/blackbox-exporter:v0.24.0
+    ports:
+      - 9115:9115
+    volumes:
+      - ./blackboxexporter/:/etc/blackboxexporter/
+    command:
+      - '--config.file=/etc/blackboxexporter/config.yml'
+    restart: always
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.3.19.32
+    ports:
+      - "8123:8123"
+      - "9008:9008"
+      - "9009:9009"
+    environment:
+      # Default user and database will be created using `init-defaults.sh` script
+      CLICKHOUSE_DB: r0
+      CLICKHOUSE_USER: demouser
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    hostname: clickhouse-0.localhost
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - ./clickhouse/init-defaults.sh:/docker-entrypoint-initdb.d/init-defaults.sh:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "http_proxy='' wget -nv -t1 --spider 'http://localhost:8123/' || exit 1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  vector:
+    image: timberio/vector:0.27.0-debian
+    container_name: vector
+    ports:
+      - 8888:8888
+    environment:
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    volumes:
+      - ./vector/vector.toml:/etc/vector/vector.toml:ro
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  grafana:
+    build: ./grafana/
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-clickhouse-datasource
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+          - name: 'ClickHouse'
+            type: 'grafana-clickhouse-datasource'
+            isDefault: true
+            jsonData:
+              defaultDatabase: r0
+              port: 9000
+              server: clickhouse-0.localhost
+              username: demouser
+              tlsSkipVerify: false
+            secureJsonData:
+              password: ${CLICKHOUSE_PASSWORD}
+            editable: true
+        EOF
+        mkdir -p /etc/grafana/provisioning/dashboards
+        cat <<EOF > /etc/grafana/provisioning/dashboards/dashboard.yaml
+        apiVersion: 1
+        providers:
+          - name: demo
+            type: file
+            updateIntervalSeconds: 30
+            options:
+              path:  /var/lib/grafana/dashboards
+              foldersFromFilesStructure: true
+        EOF
+        /run.sh
+    ports:
+      - "3000:3000"

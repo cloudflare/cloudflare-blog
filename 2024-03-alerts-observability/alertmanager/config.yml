@@ -1,0 +1,10 @@
+route:
+    receiver: 'webhook'
+
+receivers:
+    - name: 'webhook'
+      webhook_configs:
+      - url: http://vector:8888 
+
+templates:
+  - template/*.tmpl

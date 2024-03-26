@@ -1,0 +1,178 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 3,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "": {
+                  "color": "transparent",
+                  "index": 4
+                },
+                "active": {
+                  "color": "orange",
+                  "index": 1,
+                  "text": "active"
+                },
+                "firing": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "firing"
+                },
+                "resolved": {
+                  "color": "green",
+                  "index": 3,
+                  "text": "resolved"
+                },
+                "suppressed": {
+                  "color": "yellow",
+                  "index": 2,
+                  "text": "suppressed"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 17,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.0.0-beta",
+          "queryType": "table",
+          "rawSql": "SELECT timestamp,\n       status,\n       alert_identifier\n  from (\n        SELECT toStartOfFifteenMinutes(timestamp) as timestamp,\n               concat(labels.alertname, ', ', labels.instance) as alert_identifier,\n               status.state as status,\n               fingerprint\n          FROM r0.alerts\n         GROUP BY timestamp,\n                  alert_identifier,\n                  fingerprint,\n                  status\n         Order by timestamp\n       )",
+          "refId": "A"
+        }
+      ],
+      "title": "alertname, instance state timeline (rollup: toStartOfFifteenMinutes)",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "alert_identifier",
+            "emptyValue": "empty",
+            "rowField": "timestamp",
+            "valueField": "status"
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "time",
+                "targetField": "timestamp\\alert_identifier"
+              }
+            ],
+            "fields": {}
+          }
+        }
+      ],
+      "type": "state-timeline"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Alerts state timeline",
+  "uid": "d71c6f86-ca18-4ddf-b8b8-cdb9833cc9a1",
+  "version": 3,
+  "weekStart": ""
+}

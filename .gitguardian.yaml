@@ -1,0 +1,4 @@
+version: 2
+secret:
+  ignored-paths:
+    - '2024-03-alerts-observability/*'

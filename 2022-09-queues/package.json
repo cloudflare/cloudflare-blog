@@ -1,0 +1,16 @@
+{
+  "name": "queues-blog-example",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "simple_load": "sh simple_load.sh"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^3.16.0",
+    "typescript": "^4.8.3",
+    "wrangler": "^0.0.0-52ce6df3"
+  }
+}

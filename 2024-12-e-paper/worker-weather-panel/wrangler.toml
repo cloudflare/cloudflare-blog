@@ -1,0 +1,12 @@
+name = "weather-panel"
+main = "entry.py"
+compatibility_flags = ["python_workers"]
+compatibility_date = "2024-10-11"
+
+[observability]
+enabled = true
+
+[[kv_namespaces]]
+binding = "KV"
+id = "xxx"
+preview_id = "xxx"

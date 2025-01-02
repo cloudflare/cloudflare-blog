@@ -13,7 +13,7 @@ command, it tries to print the numbers as rates. Best example:
 mmsum
 -----
 
-Sums numbers passed on standad input. Pretty trivial but it's not so
+Sums numbers passed on standard input. Pretty trivial but it's not so
 easy to do it in bash. Example:
 
     $ echo -e "1\n2" | ./mmsum

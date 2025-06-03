@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "2025-05-finalization-registry",
+	"name": "finalization-registry",
 	"main": "src/index.js",
 	"compatibility_date": "2025-06-01",
 	"observability": {

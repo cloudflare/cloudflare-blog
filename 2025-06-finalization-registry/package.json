@@ -1,0 +1,17 @@
+{
+	"name": "finalization-registry",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"build:wasm": "cd src/wasm && cargo build --target wasm32-unknown-unknown",
+		"deploy": "npm run build:wasm && wrangler deploy",
+		"dev": "npm run build:wasm && wrangler dev",
+		"start": "npm run build:wasm && wrangler dev",
+		"test": "npm run build:wasm && vitest"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"vitest": "~3.0.7",
+		"wrangler": "^4.18.0"
+	}
+}

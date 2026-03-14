@@ -10,8 +10,8 @@
 		"test": "npm run build:wasm && vitest"
 	},
 	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"@cloudflare/vitest-pool-workers": "^0.8.71",
 		"vitest": "~3.0.7",
-		"wrangler": "^4.18.0"
+		"wrangler": "^4.35.0"
 	}
 }
